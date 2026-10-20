@@ -1,8 +1,9 @@
-# Jev-selected CBFs: project architecture and planning reference
+# Jev-selected CBFs: evolving architecture and working plan
 
-Status: planning document, not a running system or authorization to start building.
-Updated 20 October 2026. This is the written reference for the project discussion;
-the immediate priority is code design and architecture, not test runs or deployment.
+Status: a living research plan, not a frozen implementation specification.
+Updated 20 October 2026. The `jev-cbf-planning` repository currently contains this
+document, not an implemented framework. This revision updates the planning approach;
+it does not start implementation, installation, experiments, or hardware deployment.
 
 The agreed direction is a **new standalone repository** that imports and calls
 existing FRAX, OSCBF, and CBFpy implementations. It owns the task-conditioned
@@ -12,21 +13,47 @@ robotics libraries. Leave the three original repositories unchanged.
 The research idea added to the brief is to generate several geometrically valid,
 conservative representations deterministically, then let Jev choose among their
 IDs using the task and measured geometric/computational costs. Jev does not need
-to generate geometry, Python code, or arbitrary CBF equations.
+to generate geometry, Python code, or arbitrary CBF equations. How we present
+candidates, ask questions, combine answers, and revise decisions is itself part
+of the research, not a prompting strategy already settled by this document.
+
+### Working approach: decide the next step, not the whole project
+
+Agree on one small step, implement or inspect it, review what happened with Nihar,
+and use that evidence to choose the next step. A later step may change, split,
+disappear, or become unnecessary. Do not build an entire imagined final architecture
+before learning whether the first pieces work.
+
+Keep the immediate objective and necessary assumptions explicit. Leave future
+questions open until they matter. Normal implementation details can follow what
+is simple and natural; exact file counts, worker counts, API retry settings,
+query schedules, thresholds, and optimization techniques are not requirements
+merely because an earlier draft suggested them.
+
+The stable boundaries are the project purpose, reuse of upstream implementations,
+read-only FRAX/OSCBF/CBFpy repositories, consistent physical/data conventions, and
+honest validation and reporting. Nihar owns consequential research and safety
+ambiguities; the coding agent should surface them rather than quietly resolve them.
+Do not turn this into an approval ceremony for every helper function or local refactor.
+
+Jev templates and orchestration are research components. Start with a simple
+experiment, inspect decisions and failure cases, then revise the questions,
+decomposition, context, and update policy. They should be easy to change without
+rewriting the controller. A typed result contract helps integration; it should not
+freeze the research design.
 
 ### How to use this document
 
-- Sections 2, 3, and 10 define the proposed code layout, interfaces, and reuse plan.
-- Sections 4-8 record geometry, selection, interaction, and update constraints that
-  the implementation must account for; numerical settings remain proposals.
-- Sections 1, 9, and 11 preserve future milestones and evaluation ideas. Experiment
-  design, task thresholds, API setup, dependency installation, and test runs are
-  deferred; their inclusion is not an instruction to execute them now.
-- Section 13 distinguishes architectural choices from outstanding configuration
-  choices and empirical questions. Do not silently turn a suggested default below
-  into an agreed requirement or a measured result.
-- Section 14 is the engineer handoff: the first coding deliverable, architecture
-  baseline to follow, deferred work, and decisions requiring owner review.
+- Sections 2, 3, and 10 are a provisional map of responsibilities and reuse options,
+  not a demand to scaffold every module or finalize every data field now.
+- Sections 4-8 preserve useful mathematical and integration considerations. Apply
+  them when the corresponding feature is introduced; do not mistake examples for
+  a complete first-deliverable checklist.
+- Sections 1 and 9 describe possible later demonstrations and evaluation questions,
+  not a predetermined sequence or benchmark protocol.
+- Section 11 lists correctness checks to use as relevant capabilities are added.
+- Section 13 separates approved choices from open decisions. Section 14 gives
+  the narrow, step-by-step engineer handoff and the approved first checkpoint.
 
 Any change to a research assumption should update this document and, once code
 exists, its corresponding configuration. No implementation code is added by this
@@ -52,37 +79,30 @@ objects, inaccurate geometry/dynamics, or arbitrary contact transitions. Smooth
 barriers alone do not guarantee whole-task safety, especially with relaxed QPs,
 sampled control, and online changes to the constraint set.
 
-Initial simplifications: simulation, known object identities/poses/bounds, known
-robot state, and stationary scene obstacles. Panda/MuJoCo is the recommended first
-integration because the supplied FRAX demo already uses it, not an architectural
-restriction on every future robot or simulator. Actual sensor noise, independent
-moving obstacles, arbitrary meshes, learned policies, and active perception are
-extensions with explicit gates, not implicit features of the first result.
+Ground-truth object identities/poses/bounds and known robot state are permitted
+initial simplifications. The existing Panda/MuJoCo demo is now the approved first
+checkpoint, not a simulation requirement from the original brief or a choice
+of final hardware. A static scene is a manageable baseline; adding motion requires
+the dynamics considerations below, not just changing an object position.
 
-### Future milestones and task choice (provisional)
+### Approved first checkpoint and later possibilities
 
-- M0: reproduce the original FRAX demo and verify robot/simulator agreement.
-- M1: reach a prescribed end-effector pose through static clutter. Demonstrate live
-  changes to constraints through task/selection updates without moving obstacles.
-- M2, proposed first full manipulation demonstration: grasp a small box, lift it,
-  move it to a supplied placement region, release, and retreat. Use scripted task
-  phases and the same OSC controller, not a newly trained policy or an implicit
-  global path planner.
-- M3: replace ground-truth observations with RGB-D estimates; subsequently evaluate
-  noise, active views, and moving scenes as separate extensions.
+The approved first checkpoint is to run the existing FRAX OSCBF simulation demo
+from the Jev repository without editing the upstream sources or adding new Jev
+functionality. Use `uv` with an isolated project environment, reuse the existing
+read-only upstream checkouts, and try Nihar's current Mac first. Report compatibility
+problems before changing machines or approach. Learn what imports, dependencies,
+and minimal adapter are actually needed; do not require the complete framework first.
 
-The user was asked whether the first full demonstration should instead be pushing
-or reaching only, and which execution machine/API access are available. Pending
-those preferences, Panda/MuJoCo and the milestones above are the proposed defaults.
-The module contracts do not depend on that preference.
+After reviewing that result, choose the next useful investigation. Possibilities
+include inspecting geometric covers in isolation, trying a small scene-selection
+example, or adding a simple reaching/pushing demonstration. Full manipulation,
+estimated geometry, cameras, and active perception remain project directions,
+not a sequence whose implementation details must be fixed now.
 
-Illustrative M1 settings, to decide when designing runs: position error <= 0.02 m
-and rotation error <= 5 degrees for 0.5 s;
-episode timeout 15 s. M2 success requires the correct object, a verified lift of at
-least 0.05 m, placement inside the supplied goal region, release, and 0.5 s of
-settling. Report goal completion independently from safety, and also their joint
-rate. These thresholds are configurable task proposals, not agreed acceptance
-criteria or measured results.
+Choose task-success definitions, timing settings, and experiment sizes when the
+corresponding task is selected. Tune and record them with the experiment rather
+than presenting unexplained numbers in the architecture as requirements.
 
 ## 2. Components and responsibility
 
@@ -110,13 +130,14 @@ The accepted snapshot feeds the filter; perception and Jev never run inside the
 torque-control calculation. Robot state is supplied to both control and selection
 as needed; the diagram separates their update paths, not their physical state.
 
-Use ordinary functions and small dataclasses; no dependency-injection framework,
-plugin registry, generic planning framework, or base class for every function.
-The following is a proposed small layout, not files already implemented. Repository
-and Python package names remain placeholders until repository creation is requested.
+Prefer ordinary functions and small data records. Add abstractions only when an
+actual substitution or maintenance need justifies them. The layout below is one
+possible later organization, not files to create before the first experiment.
+The repository exists; the Python package name and packaging details can be chosen
+when needed.
 
 ```text
-<new-repository>/
+jev-cbf-planning/
   pyproject.toml
   src/<package>/
     types.py       shared records and configuration
@@ -135,8 +156,10 @@ and Python package names remain placeholders until repository creation is reques
 Keep new logic in the new repository. Use normal public imports where possible;
 centralize the few source-file imports in `upstream.py`. Do not spread path hacks,
 duplicate upstream controller math, or modify upstream code to make imports work.
-Add further modules only when a concrete need warrants them. Lightweight recording
-can initially live in `run.py`; a later evaluator can be split out when implemented.
+Modules may start combined and split as needed. Lightweight recording can initially
+live next to the entry point; a separate evaluator or worker is not required until
+the experiment needs one. Pinned submodules are one dependency-management option,
+not a prerequisite for trying imports from existing read-only checkouts.
 
 Upstream ownership:
 
@@ -167,18 +190,23 @@ Substitution boundaries:
 The evaluator may inspect simulator truth. Its answers and success labels are not
 passed to Jev or used to rescue its decisions silently.
 
-Configuration has one explicit construction point in `run.py`, using small typed
-records from `types.py`. Keep robot/task settings, geometry choices, model/prompt
-versions, margins/gains, solver settings, capacity policy, and update/failure
-settings visible there. Do not scatter magic constants or introduce a generic
-configuration framework. Secrets come from the environment and are never logged.
+Keep relevant settings easy to find and change, without introducing a configuration
+framework ahead of need. Add robot/task, template/model, geometry, solver, or update
+settings as the corresponding capability is introduced. Record the choices used
+for an experiment. Do not store credentials in source or experiment logs.
 
 ## 3. Data and action contracts
 
-All geometry uses metres, radians, seconds, and a right-handed world frame equal
-to the initial fixed robot-base frame. `T_A_B` maps coordinates in B into A.
-Store transforms as 4x4 matrices; SDK/serialization adapters must explicitly
-convert quaternion conventions rather than infer their ordering.
+These names are a working vocabulary for integration, not an obligation to build
+all records and fields at once. Implement the data needed for the current step and
+revise its structure as the interface becomes clearer. Preserve explicit units,
+frames, action meaning, and provenance as the representation evolves.
+
+Use metres, radians, seconds, and explicitly named right-handed frames. The
+reference formulas below use a world frame; matching it to the initial fixed
+robot-base frame is a convenient initial option. `T_A_B` maps coordinates in B
+into A. 4x4 transforms are one natural representation, not a mandatory wire format.
+If quaternions are used, specify and convert their ordering explicitly.
 
 `RobotState`: arm joint names/order, `q`, `v`, simulation time, monotonic acquisition
 time, and gripper width/state separately. Read simulator joints/actuators by name,
@@ -205,8 +233,8 @@ or the expected candidate answer is not.
 velocity, optional desired accelerations, and gripper opening in metres. The
 initial policy is a scripted waypoint/phase routine. The existing OSCBF controller,
 fed by FRAX kinematics/dynamics, maps arm commands to nominal torque; the CBF sits
-after this mapping. A future learned policy must
-implement this command contract or supply an explicit action adapter. A policy
+after this mapping. A future learned policy must implement this command contract
+or supply an explicit action adapter. A policy
 producing joint velocities cannot be silently treated as a torque policy.
 
 `GeometryCandidate`: object/revision/candidate IDs, primitive type and local
@@ -221,7 +249,8 @@ immediately converting everything to booleans.
 
 `ConstraintSnapshot`: accepted revision, task/scene epochs, immutable numeric
 parameters, named pair IDs/masks, fixed gains, validation record, source ages,
-and chosen precompiled capacity. No mutable registered-static config state.
+and any array-shape metadata the implementation needs. Do not silently mutate
+registered-static configuration to represent a runtime constraint update.
 
 `ControlResult`: nominal torque, filtered torque, actuator-limited requested torque,
 accepted snapshot revision, success/failure reason, and numerical diagnostics.
@@ -254,8 +283,8 @@ conditions gives an intersection of allowed robot configurations. Avoiding an
 intersection of obstacle primitives would require disjunctive logic; that is not
 the proposed implementation.
 
-Implement sphere covers first for M1 plumbing. Then add one ellipsoid candidate
-before the representation-selection experiment. Initial candidate family:
+When geometric generation becomes the chosen next step, sphere covers are a
+simple starting point. A possible family to inspect and refine is:
 
 1. One sphere enclosing the object-local bounding box.
 2. Two spheres enclosing two equal box sections along its longest axis.
@@ -289,10 +318,11 @@ R_j, use the dimensionless quadratic barrier:
 `h_ij = ||p_i(q) - c_j||^2 / (r_i + R_j + delta)^2 - 1`.
 
 Use one barrier per enabled pair, not hard min/max aggregation. Initial geometric
-clearance margin proposal: `delta = 0.01 m`, to confirm before runs and then fix
-across methods. Future perception-error
-inflation is additional and must come from calibrated uncertainty, not Jev's
-semantic confidence. Changing this margin is an explicit experiment parameter.
+clearance margin and who selects it remain decisions for the geometry/selection
+experiment; this revision does not set a numerical margin. Separate any desired
+clearance from perception-error inflation. A model-confidence statistic should
+not be assumed to equal metric geometric uncertainty without calibration. The
+mentor's proposal for Jev-selected margins remains pending a separate decision.
 
 For an obstacle ellipsoid with semi-axes a and robot sphere plus margin rho,
 simply replacing a with `a + rho` is not generally a conservative Minkowski sum.
@@ -309,63 +339,74 @@ For rho = 0 use the original ellipsoid. The barrier is
 This outer approximation has its own excess volume and is not an exact distance.
 Measure effective robot-expanded geometry as well as raw obstacle geometry.
 
-Reuse the demo's alpha/alpha_2 linear gains of 10 for initial comparisons and keep
-them fixed. Primitive quadratics have continuous second derivatives for positive
-sizes, but switching candidates is a separate hybrid-system event, not a smooth
+The demo's alpha/alpha_2 gains provide an inherited baseline, not an instruction
+to tune or redesign gain selection before trying it. Primitive quadratics have
+continuous second derivatives for positive sizes, but switching candidates is a
+separate hybrid-system event, not a smooth
 operation. Warm up with a valid nonsingular robot configuration and EE rotation,
 not an all-zero orientation or an unchecked singular pose.
 
 ## 5. Jev questions, selection, and semantic authority
 
-Use the TypeSafe SDK and a pinned model ID, initially `jev-1.13.0` (documented
-stable alias target at review time). Do not use a moving `jev-latest` alias in
-recorded comparisons. Log the model actually returned. New model versions require
-separate threshold validation. Do not install an SDK or make billed API requests
-as part of this architecture review; access/setup remains an implementation gate.
+### Templates and orchestration are research, not settled plumbing
 
-One request contains narrow questions for each object: a role Choice, a candidate
-Choice, and avoidance questions for named robot groups. Candidate descriptions
-include their measured costs and current task-relative spatial context. Every
-question is evaluated independently against shared state; geometry/pair questions
-must be self-contained conditional questions, not assume they see the role answer.
-Combine/gate results in code after receiving them.
+Start with the simplest useful question/scene experiment when selection becomes
+the chosen step. Inspect concrete answers, mistakes, uncertainty, and behavior
+before adding more stages or rules. Do not commit the project to one universal
+prompt, fixed role taxonomy, robot-group partition, or multi-call workflow.
 
-Initial roles: target, avoid, support, unnecessary-for-current-task, uncertain.
-Role does not grant contact permission. Jev proposes avoidance of robot groups
-(upper arm, forearm, wrist/hand; refined palm/finger groups only after M2 modeling
-is implemented). Code maps named groups to verified collision-sphere indices.
-Avoid one API question per individual robot sphere in the first version.
+Examples worth exploring include separate role/candidate/pair questions, combined
+decisions, different descriptions of the task and geometry, and different ways of
+handling ambiguity. Upper-arm/forearm/wrist groups and labels such as target,
+avoid, or support are possible starting points, not mandatory classifications.
+Even the right unit of a question is something to learn from examples.
 
-Jev selects candidates directly for the main method. Numeric geometry features
-remain deterministic; a separate baseline picks the lowest normalized excess
-volume plus normalized pair-count cost, with equal weights as the initial declared
-setting. Publish both axes and a weight sweep rather than claiming one universally
-best tradeoff. The numerical baseline uses the same admissible candidates and
-proposed avoidance masks as the corresponding geometry ablation.
+Keep question wording, candidate descriptions, state/context construction, and
+answer-combination logic easy to inspect and revise without editing controller
+mathematics. A simple editable template or small configuration can be enough;
+there is no requirement for a prompt framework or a particular file format.
+Record the template/configuration and actual model version for comparisons.
 
-Keep generation, CBF gains, numeric sizing, validation, and allowed-contact
-authorization in code. Jev may propose a role or relevant robot part; it does not
-modify a Python barrier function or authorize an arbitrary contact.
+Query timing, question batching, call dependencies, and how previous decisions
+are used are also experimental choices. Choose the initial version for the small
+case at hand; review its behavior with Nihar before deciding how to expand it.
+Do not invent confidence cutoffs, debounce counts, or cost weights in advance.
 
-**Important limit:** validating geometric coverage of selected objects does not
-prove that Jev selected every object/pair that needed protection. The simulation
-benchmark must apply and evaluate its selections honestly, count false omissions,
-and avoid claiming full-scene safety for an incomplete selected set. Do not add an
-unreported oracle that repairs masks. A future deployment guard can override unsafe
-omissions, but its overrides and its independent contribution must be evaluated.
+### Keep the integration understandable while allowing experiments
 
-For the proposed uncertainty protocol, retain/enable avoidance for uncertain
-objects and pairs. A role label or confident geometry Choice alone never authorizes
-dropping an avoidance pair. Require an explicit pair-omission decision with a
-declared probability threshold and debounce across compatible updates. For example,
-two responses with Noul omission probability >= 0.95 are a setting to evaluate,
-not an agreed or calibrated robot-safety guarantee. Tune thresholds on a development
-split, freeze for held-out evaluation, and report coverage/omission versus threshold.
-Repeated responses are debounce, not independent evidence.
-An invalid or ambiguous candidate selection retains the current valid candidate,
-or uses the declared conservative baseline candidate if admission checks pass.
+The selector can propose roles, candidate IDs, and robot-body pairs through a
+small structured output that code can validate. Different templates/orchestrations
+can feed that same control boundary; revise the boundary deliberately if evidence
+shows it is inadequate. Candidate generation and numerical barrier construction
+remain separate from language-model output in the current project idea.
+
+Respect actual API behavior while experimenting: questions evaluated independently
+in one request cannot consume each other's returned answers. Dependent decisions
+need an explicit later stage or questions phrased conditionally. This is an API
+consideration, not a reason to prescribe one orchestration for every experiment.
+
+Model confidence, geometric uncertainty, and collision risk are different signals.
+How to use them is a research question, not a universal threshold protocol. A
+semantic role alone is not a geometric coverage certificate or an unrestricted
+contact permission. Changes to contact authorization, margin/gain authority, or
+other consequential safety assumptions need an explicit decision with Nihar.
+
+**Important limit:** validating coverage of selected objects does not prove that
+the selector included every object/pair that needed protection. Evaluate omissions
+honestly; do not silently use oracle labels to repair decisions or claim full-scene
+safety for an incomplete selected set. Any guard or fallback that changes the
+model's proposal should be visible in the result.
+
+Mocks, replay, or a simple numeric selector can help investigate one component.
+Use them when useful, label them accurately, and do not require all baselines or
+a predetermined numerical cost function before trying the first Jev example.
+No SDK installation or billed requests are authorized by this document revision.
 
 ## 6. Interactions, grasping, and object motion
+
+These are considerations for experiments that introduce contact or object motion,
+not features to implement before the initial checkpoint. The examples below do
+not choose the final manipulation task or settle new mentor proposals.
 
 Permanent filtered-method protections: torque bounds, joint limits, self-collision,
 floor/table clearance with explicit mounting/support exclusions, and the demo's
@@ -373,13 +414,15 @@ singularity avoidance. The latter also requires numerical checks near rank loss;
 sphere/ellipsoid smoothness does not cure an unstable task-inertia inverse or SVD.
 Do not silently remove fixed protections because Jev labels an object harmless.
 
-For M1, no target contact is permitted; the goal is a free-space EE pose. Scripted
-waypoints are shared across methods. An OSC safety filter is local and can stop
-at a barrier; it is not expected to discover a route around every obstruction.
-Record stalled/blocked episodes as such, not automatically as safety failures.
+For a free-space reaching experiment, no target contact is needed. If that task
+is selected, use comparable commands across methods. An OSC safety filter is local
+and can stop at a barrier; it is not expected to discover a route around every
+obstruction. A stalled episode is not automatically a safety failure.
 
-M2 task phases: approach, descend, close, lift, transport, lower, release, retreat.
-The explicit task contact table permits fingertip-pad/target contact only during
+For a future pick-and-place experiment, possible phases are approach, descend,
+close, lift, transport, lower, release, and retreat. This is a reference example,
+not a task script to implement before choosing the demonstration. Its explicit
+contact rules would permit fingertip-pad/target contact only during
 the designated interaction phases, and target/table or target/placement-surface
 contact where required. Palm, wrist, arm, unrelated objects, and payload/environment
 pairs remain subject to the declared avoidance policy. Gripper motion/force limits
@@ -387,8 +430,8 @@ are controlled by the task/simulator adapter; the seven-torque arm QP does not
 automatically constrain finger motors or guarantee grasp quality.
 
 The current FRAX model merges hand/finger geometry into an arm-link collision
-model. M2 therefore requires a small, separately validated palm/finger model or
-conservative gripper swept envelope; disabling the whole hand's target constraints
+model. Fingertip-specific interaction therefore requires a validated palm/finger
+model or conservative gripper swept envelope; disabling the whole hand's target constraints
 and calling that fingertip-only contact is not acceptable. Map named simulator
 geoms and FRAX sphere owners explicitly. The simulator already has a gripper
 actuator, but the demo does not operate it as a grasping routine.
@@ -396,13 +439,16 @@ actuator, but the demo does not operate it as a grasping routine.
 During verified rigid transport, represent the payload as collision primitives
 attached to the EE through a measured frozen relative transform; their centres
 are functions of q and can be differentiated by CBFpy. Check actual payload pose
-for slip. Incorporate known payload mass/inertia in a prebuilt loaded robot-model
-variant before claiming a matched dynamics model. Contact acquisition/release and
+for slip. Account for payload mass/inertia before claiming a matched loaded
+dynamics model; choose the mechanism when this feature is introduced, rather than
+prescribing prebuilt model variants now. Contact acquisition/release and
 any unmodeled payload dynamics are empirically evaluated hybrid phases, not a
-formal whole-task safety certificate. M2 is gated on demonstrating these additions.
+formal whole-task safety certificate. Address these issues when manipulation is
+chosen; do not require payload infrastructure for a reaching or geometry experiment.
 
-Independent obstacle motion is disabled in M1/M2. Unexpected non-target movement
-invalidates the static-scene assumption and is logged as a failed/aborted episode.
+For a static-scene baseline, unexpected obstacle movement violates that assumption
+and must be reported. Whether to pause, investigate, or abort the simulation should
+be appropriate to the current experiment, not a universal preselected response.
 For moving scenes, extend the state/drift to include relevant obstacle motion or
 an explicit time-dependent formulation, then validate velocity/acceleration and
 latency assumptions. Replacing a centre passed as an extra argument each tick does
@@ -410,107 +456,101 @@ not by itself add the missing time derivatives to current CBFpy.
 
 ## 7. Timing, updates, and JAX shape management
 
-Architectural choices here are separate control/selection loops, bounded work,
-immutable snapshots, and fixed-shape numeric CBF arguments. Exact rates, timeouts,
-expiry periods, and capacity buckets below are provisional run settings to decide
-after compatibility checks and profiling, not architecture requirements.
+This section identifies issues to handle when live updates are introduced, not
+a scheduler to implement before the first example. Start simply, observe behavior,
+and add concurrency or optimization only when the current step needs it.
 
-Proposed operating targets: MuJoCo physics at 1000 Hz, arm control at 500 Hz,
-selector requests up to 2 Hz, and viewer/rendering independently at <= 30 Hz.
-These are initial budgets to benchmark, not existing performance measurements or
-hard real-time guarantees. Run headless timed trials separately from GUI demos.
+### Correctness to preserve
 
-Use one background worker with at most one Jev request in flight and a latest-only
-input slot. No unbounded queue. Start with a 1 s end-to-end request timeout and
-SDK retries disabled; retry a fresh snapshot on the next scheduled opportunity.
-Record HTTP errors/rate limits and response times. Model failure never blocks the
-control thread. Read credentials from the environment and do not record keys.
+Keep the identity, geometry version, frame, and relevant task context of a proposal
+understandable. A result must not silently refer to different objects or coordinate
+conventions. Robot motion alone need not invalidate a query; check its proposal
+against the state that exists when it is used, rather than trusting old positions.
 
-Distinguish per-tick snapshot ID from scene epoch (object identity/topology or
-geometry revision) and task epoch (instruction/phase/contact rules). Reject results
-for obsolete epochs/candidate sets. Robot motion alone must not invalidate every
-pending query; revalidate a returned proposal against current q/v and current poses.
-Transforms are refreshed by the scene provider; a semantic result is not a cache
-of stale world coordinates. Static-scene operation avoids pretending this also
-solves the moving-obstacle derivative problem.
+A constraint change can exclude the robot's current state even if both old and
+new geometries cover the obstacle. For relative-degree-two barriers, inspect both
+h and the intermediate `psi = L_f h + alpha_2(h)` when evaluating such a change.
+Do not assume arbitrary switching preserves the original safety conditions.
+Choose and document the admission/failure response when implementing updates.
 
-Before installing any change, verify IDs, dimensions, coverage, allowed contacts,
-and finite QP data. Check current h >= 0 and HOCBF intermediate
-`psi = L_f h + alpha_2(h) >= 0` for newly enabled/changed RD2 rows, then check the
-trial filtered command and applied-command residuals. Reject unsafe transitions
-and retain the last still-valid snapshot. A geometry switch can newly exclude
-the current robot pose even when both candidates enclose the same object.
+Control must consume a complete, consistent set of parameters, not a half-updated
+list. How that is achieved can be a simple synchronous update initially or an
+immutable snapshot/message boundary when concurrency is actually needed.
 
-One update manager owns acceptance, rejection, expiry, fallback, and revision
-numbering. The selector only proposes changes; the control loop reads one complete
-accepted snapshot, never a half-updated list. Keep Python-side descriptive records
-separate from the immutable numeric arrays passed to JAX.
+For real-time use, model/network delays must not silently stop the arm-control
+calculation. An intentionally paused simulation is a different execution mode:
+describe what actually ran rather than calling it real-time operation.
 
-Install snapshots atomically at control boundaries. Geometry changes and task
-phase changes require immediate review; omissions/cost-only changes use the
-debounce rule above. New observed objects start with baseline avoidance pending
-classification. Expire semantic decisions after 2 s without a compatible refresh;
-attempt the declared all-object fallback with current valid covers/contact rules.
-If that fallback cannot pass admission checks, end the simulation episode as an
-abort/failure. Do not claim that zero torque or an unvalidated hold is a safe stop.
+Runtime changes should be represented explicitly in the arguments/data used by
+JAX, not hidden mutations of registered-static configuration. Inspect compilation
+behavior when adding changing constraints. Do not silently omit pairs because
+the chosen array representation cannot hold them.
 
-Pack selected robot-sphere/obstacle-primitive pairs into numeric arrays passed as
-runtime args to h_2; do not mutate registered-static config fields. Cache/prewarm
-a bounded bank of capacity variants, each including the same mandatory rows.
-A possible bank is 0 scene rows and powers of two from 32 up to the configured
-scene's maximum possible pair count, rounded up; choose the actual buckets later.
-Choose the smallest adequate prewarmed capacity; fill padding with finite,
-constant satisfied barriers, never NaN/zero-axis placeholder ellipsoids. Keep pair
-ordering deterministic. Capacity overflow is an explicit failure, not truncation.
+### Choices to make from evidence
 
-Measure enabled rows, allocated QP rows, binding rows, and actual compute time.
-Fewer enabled rows within the same capacity need not save time. No compilation,
-network I/O, logging, rendering, or Python geometry fitting inside the timed jitted
-control function. Record compile time separately and discard warmup from steady
-latency statistics without hiding runtime recompilation events.
+There is no prescribed number of workers or requests in flight, control/physics
+frequency, timeout, retry count, semantic expiry period, or debounce rule. Use
+ordinary mechanisms appropriate to the current experiment and document choices
+that affect its meaning or observed behavior.
+
+Whether to query once, periodically, or in response to an event belongs to the
+research design. Freshness and fallback behavior must fit that design; a universal
+expiry timer must not silently turn one query policy into another.
+
+A capacity bank, padding, prewarming, batching, or alternative array layout may
+be useful if changing shapes causes measured problems. None is a first-step
+requirement. If padding is used, it needs finite, well-defined satisfied barriers,
+not NaN or zero-axis geometry. Fewer enabled rows in one fixed-size QP need not
+reduce its compute time; measure rather than assume.
+
+Keep network I/O and Python orchestration outside jitted numerical functions.
+Record enough timing/compile information to explain observed problems, without
+requiring a full performance instrumentation system before a proof of concept.
+Do not place credentials in logs.
 
 ## 8. Solver behavior and numerical failure
 
-The solver path and need for explicit diagnostics are architectural; exact
-tolerances, penalties, and acceptance thresholds must be confirmed before runs.
-
-Initial backend: the FRAX port's ElastiQP path through CBFpy, float64 CPU,
-solver_tol 1e-5, inherited CBF relaxation penalty 1e3 and control penalty 1e5.
-Keep weights/gains/normalization fixed across method comparisons. If installation
-on the selected machine fails, test CBFpy's qpax backend as an explicitly recorded
-alternative; do not silently switch versions/solvers during experiments.
+Reuse the existing CBFpy/FRAX solver path first and inspect its actual behavior.
+The reviewed FRAX port selects ElastiQP with solver_tol 1e-5; its inherited
+relaxation penalties were 1e3 for CBFs and 1e5 for control bounds. These describe
+the inspected source, not a new project-wide tuning specification.
 
 ElastiQP relaxes constraints, including control bounds. Apply physical motor
-limits regardless of backend, then evaluate the CBF residual for the command
-actually applied. A clipped returned torque can invalidate a previously satisfied
-CBF inequality. Record nominal, returned, requested-applied, and simulator actuator
-torques where available. The initial arm motors have gear 1; verify their mapping.
+limits and evaluate what happens to the command actually applied: clipping can
+invalidate an inequality satisfied by the returned torque. Verify actuator mapping
+when it becomes relevant. Do not interpret a returned control vector alone as
+proof of a successful, physically safe solve.
 
-The public CBFpy wrapper returns the control vector, not full solve diagnostics.
-Add a thin instrumented adapter around the existing QP-data/solver path, preserving
-its math and using backend status where available; do not write a new optimizer.
-Record per-row `max(0, G_i*tau - b_i)` and the scaled residual obtained by dividing
-by `1 + abs(b_i) + ||G_i||_1 * ||tau||_inf`. Initial unacceptable scaled residual:
-1e-4, with raw residuals also published. Treat this as a declared numerical
-acceptance threshold to validate, not a physical clearance guarantee.
+CBFpy's public wrapper returns the control vector rather than full diagnostics.
+Add a thin instrumented adapter only when the experiment needs that visibility;
+reuse the existing QP data/solver rather than building another optimizer. Inspect
+residuals and numerical scales before choosing acceptance thresholds. This plan
+does not impose an unexplained residual cutoff.
 
-Nonfinite data/controls, an invalid initial state, unacceptable residual, or missed
-physical limits cause an explicit failed/aborted simulation episode with a saved
-reason. Do not count aborted episodes as safe successes or keep advancing the
-simulation with arbitrary replacement torques. Hardware stopping behavior is out
-of scope of this simulation design and requires a separately validated controller.
+Report nonfinite data, failed solves, invalid states, and control-limit problems
+explicitly. Depending on the simulation and failure, pausing for inspection,
+rejecting an update, retaining still-valid constraints, or aborting may be
+appropriate. Decide the behavior when it matters; never silently continue with
+an arbitrary replacement torque or count a failed/aborted run as a safe success.
+A zero torque or unvalidated hold is not automatically a safe stop.
+
+Hardware stopping behavior is outside this document's current implementation
+scope and needs a separate, hardware-specific plan before deployment.
 
 ## 9. Experiments and independent evaluation
 
-Future evaluation plan only. No scenes, episode counts, numerical thresholds, or
-test runs in this section are finalized by the architecture discussion.
+This is a menu for later experiments, not a first-deliverable checklist. Decide
+which question to investigate after reviewing the preceding step. Start with a
+small inspectable case; broaden scenes and methods when the result motivates it.
+No object counts, episode counts, success thresholds, or full metric suite are
+prescribed here.
 
-Use small scenes with 3-8 objects: compact and elongated shapes, rotated objects,
-and narrow passages. Task/target changes in the same scene test contextual
-decisions. Keep a development split for thresholds/prompts and at least 30 seeded
-held-out scene/task episodes per method for the initial report. Use identical
-initial states, task waypoints, actuator limits, and contact rules across methods.
-Record stochastic/model differences; a seed does not make a hosted API reproducible.
+Compact/elongated shapes, rotated objects, narrow passages, or task changes may
+be useful cases. For a meaningful comparison, make differing inputs, commands,
+contact rules, timing conditions, or other confounds visible. Record the relevant
+settings; a seed alone does not make a hosted API reproducible.
+
+Possible later comparisons include:
 
 | Method | Scene selection | Geometry | CBF treatment |
 | --- | --- | --- | --- |
@@ -525,41 +565,39 @@ general robot safety from scene-safety effects. “All on” does not mean enabl
 candidate representations simultaneously. Both all-on and adaptive methods receive
 the same explicit task contact permissions; an impossible grasp is not a fair baseline.
 
-Evaluate unintended contacts, signed clearance, contact forces, task completion,
-and wall-clock timing against actual simulator collision geoms, not only the fitted
-CBF geometry. Initial scenes use analytic or decomposed convex collision geometry
-so the evaluator does not confuse visual meshes with simulator collision hulls.
-Inspect contacts at every physics substep; report numerical/contact tolerance and
-sampling resolution. Discrete checks are not continuous-time collision proofs.
+Evaluate collision/clearance claims against actual simulator collision geometry,
+not only the fitted CBF geometry or visual meshes. Choose appropriate contact
+logging, tolerance, and sampling resolution for the claim and record them. Discrete
+checks are not continuous-time collision proofs.
 
-Metrics: collision-free episode rate; goal completion and safe goal completion;
-minimum true clearance; omission of required object/body pairs; selected-cover
-undercount separately from semantic omissions; raw excess union volume and
-robot-expanded conservatism; primitive/enabled/allocated/binding counts; QP
-residuals; selection changes/rejections/fallbacks; nominal-control deviation;
-control and selector p50/p95/p99/max latency; missed deadlines; scene/proposal age;
-recompilation count; API token use and cost. Publish numerators/denominators and
-confidence intervals, not only one average score.
+Choose measurements that answer the experiment's question: collision/completion
+outcomes, coverage/conservatism, constraint count, or decision/control latency may
+be enough initially. Residuals, binding/allocated rows, age, recompilation, API
+cost, or detailed timing distributions can be added when they explain a problem
+or support a claim. Do not build a large telemetry system before seeing behavior.
+Show the result in an understandable form at the user check-in; a viewer or a
+small recorded example can be sufficient for an early investigation.
 
 If every non-target object must be avoided, obstacle-role selection can be nearly
 trivial. Include meaningful instruction/contact distinctions and a rule-based
 selection baseline where needed. Do not infer that Jev adds value simply because
 CBFs or deterministic fitted geometry help. Negative findings remain informative.
 
-Log configurations, scene seeds, task/contact rules, snapshots, candidate features,
-request/response payloads (without credentials), full probabilities, selected and
-accepted constraint revisions, fallback/override reasons, actual actions, metrics,
-machine details, source SHAs, dependency lock, and prompt/model versions. Provide
-an offline replay selector for development/latency isolation; label it as replay,
-not live Jev evaluation. A mock selector is plumbing only, not research evidence.
+Keep enough configuration, inputs/outputs, versions, and decisions to understand
+and repeat the current experiment. Add richer recording or replay when useful,
+not because every future field was listed in advance. Never record credentials.
+Label replay/mock output accurately; it is not evidence of live Jev performance.
 
 ## 10. Reuse and dependency plan
 
-Create the project as its own repository when implementation/repository creation
-is requested. Reference the three upstream repositories through pinned git
-submodules under `third_party/`; do not nest the new project inside an upstream
-repository or copy their source trees into the new package. Pin commits and
-record local modifications if a future upstream change is separately authorized.
+The independent `jev-cbf-planning` repository has been created. Keep all new code
+and documentation there; the original FRAX, OSCBF, and CBFpy repositories remain
+read-only. Do not copy their implementations into the new package.
+
+Existing read-only checkouts are enough to investigate the first import/demo
+step. Pinned submodules under `third_party/` are a later reproducibility option,
+not a mandatory setup step. Choose dependency packaging when its actual needs
+are known, and record the revisions used for results.
 
 All three supply runtime code, but they need not all be installed as complete
 Python distributions. FRAX and CBFpy use normal package imports. Reuse OSCBF's
@@ -569,11 +607,14 @@ older OSCBF robot model. This avoids installing OSCBF's legacy pinned JAX/CBFpy
 stack, which conflicts with the newer FRAX examples. Source-only reuse is a
 deliberate compatibility boundary, not a claim that the whole old stack is compatible.
 
-Proposed environment: project-local Python 3.12, compatible JAX >= 0.9.1,
-MuJoCo >= 3.3.1, ElastiQP, current checked-out FRAX/CBFpy, and the TypeSafe SDK.
-Record these as compatibility requirements to check, not a resolved environment.
-Lock exact versions only after a smoke test on the selected machine; do not
-install anything as part of this documentation task.
+Approved setup direction: use `uv` with an isolated environment in the Jev project,
+reuse the current read-only upstream checkouts, and try Nihar's Mac first. The
+reviewed runtime candidate was Python 3.12 with compatible JAX >= 0.9.1,
+MuJoCo >= 3.3.1, ElastiQP, and the checked-out FRAX/CBFpy. Check actual demo needs
+before resolving versions; this is not a tested environment or a Mac compatibility
+claim. The TypeSafe SDK is for later Jev integration, not required just to reproduce
+the controller demo. Record/lock versions as setup is verified. No installation
+is performed by this documentation update.
 
 Observed source revisions (20 Oct 2026):
 
@@ -583,11 +624,12 @@ Observed source revisions (20 Oct 2026):
 | CBFpy | `0ab24ecd431ca151a80cd7e4f2a5d3967e1c4b5a` |
 | OSCBF | `6082329f8e1d61ee8e875a63a5cd80a14d513e12` |
 
-Specific adapters, confined to `upstream.py`:
+Promising reuse points to try as needed, with source imports kept in a small
+project-local adapter rather than requiring a particular module layout first:
 
 1. Import FRAX's `examples/cbf_utils.py::OSCBFTorqueConfig` from its pinned source
-   path. It already uses FRAX's `Manipulator`; subclass it in the new `control.py`
-   to supply the dynamic scene barriers. Its dynamics and task-consistent QP
+   path. It already uses FRAX's `Manipulator`; a project-local subclass can supply
+   scene barriers when that feature is introduced. Its dynamics and task-consistent QP
    objective should remain upstream implementations.
 2. Import OSCBF's `PoseTaskTorqueController` from its standalone source module.
    Supply `robot.torque_control_matrices(q, v)` and the same gains, posture target,
@@ -613,19 +655,25 @@ Preserve upstream licenses and attribution.
 
 ## 11. Verification gates and current evidence
 
-Before research runs:
+Apply these checks as the relevant capability is introduced and before making
+claims about it. They preserve correctness; they do not require building every
+future capability before the first small demo.
 
 1. Match FRAX/MuJoCo EE transforms, joint order, torque limits, mass/gravity terms,
    and robot collision sphere ownership at valid configurations.
 2. Check analytic candidate coverage and finite first/second barrier derivatives;
    compare smooth sphere/ellipsoid derivatives against numerical directional checks.
-3. Verify an obstacle/pair parameter update changes the QP without recompiling;
-   verify capacity switches only use prewarmed variants and preserve row identity.
-4. Verify h/psi admission, stale-epoch rejection, uncertain results, API failure,
-   timeout, capacity overflow, saturation, and unacceptable-residual paths.
-5. Complete baseline reaching in clutter and an online task/selection change.
-6. Gate M2 on gripper/palm geometry, contact permissions, grasp verification,
-   payload collision/dynamics handling, and an independent physical contact check.
+3. Verify obstacle/pair updates change the intended QP rows and preserve identity;
+   inspect recompilation and latency. If capacity/padding variants are introduced,
+   verify their behavior rather than assuming they work.
+4. Verify the implemented state/admission and failure handling, including stale
+   input, ambiguous results, API/numerical failures, or saturation as relevant.
+   Check timeout/capacity mechanisms if they are introduced, not as prerequisites
+   that force those mechanisms into the first implementation.
+5. Demonstrate the chosen task and an actual selection/update change before
+   claiming online adaptation; this does not select reaching as the required task.
+6. Gate manipulation claims on gripper/palm geometry, contact permissions, grasp
+   verification, payload collision/dynamics handling, and an independent contact check.
 7. Gate camera-based and moving-obstacle stages on their own geometry/calibration
    and dynamics checks; do not silently claim these from the ground-truth study.
 
@@ -636,9 +684,9 @@ inflation checks. An explicit counterexample showed naive axis-plus-radius
 inflation under-covering. Analytic containment arguments are above; sampling is
 an implementation sanity check, not a replacement for those arguments.
 
-The current system interpreter is Python 3.12.7 on arm64 macOS with NumPy 1.26.4.
-JAX, MuJoCo, qpax, ElastiQP, and typesafe-sdk are not installed in that interpreter;
-no project virtualenv was found in this workspace. Therefore no controller,
+At the initial review, the inspected interpreter was Python 3.12.7 on arm64 macOS
+with NumPy 1.26.4. JAX, MuJoCo, qpax, ElastiQP, and typesafe-sdk were not installed
+there, and no project virtualenv was found in this workspace. No controller,
 simulator, Jev API, runtime, solver, or end-to-end benchmark was executed in this
 review. Machine preference and Jev access remain to be confirmed, and runtime
 performance, threshold calibration, and paper-level novelty are empirical/open
@@ -671,172 +719,128 @@ checks rather than architectural blanks to fill with invented results.
 - [OSCBF paper](https://arxiv.org/pdf/2503.06736),
   [FRAX paper](https://arxiv.org/pdf/2604.04310).
 
-## 13. Decision register and follow-through
+## 13. Decision ownership and open questions
 
-### Requirements and proposed architecture
+### Settled boundaries
 
-| Topic | Status / direction |
-| --- | --- |
-| Repository ownership | User requirement: independent project repo; import/call the three originals rather than recreate them. |
-| Initial inputs | User requirement: ground-truth objects and robot kinematics are allowed; include dimensions/bounds so geometry is computable. |
-| Initial primitives | User requirement: spheres/ellipsoids, with multiple primitives allowed per object. |
-| Generation versus selection | Project idea: deterministic conservative candidate generation; Jev selects candidate IDs, roles, and robot groups. |
-| Nominal controller | Reuse required; proposed integration is OSCBF's existing pose controller with FRAX matrices, matching the FRAX demo's computation. |
-| CBF backend | User requirement: CBFpy; reuse FRAX's compatible OSCBF configuration rather than the older incompatible robot/config pair. |
-| Dependency boundary | Proposed design: pinned submodules, normal FRAX/CBFpy imports, two centralized source-module adapters; no upstream edits. |
-| New-code organization | Proposed design: seven small modules and shared dataclasses; substitute functions/adapters without a plugin framework. |
-| Decision authority | Proposed design: selector proposes, one validator/update manager accepts, control consumes immutable numeric snapshots. |
-| Runtime separation | Proposed design: independent bounded selection worker and control loop; no model/network calls or geometry fitting inside JIT. |
-| Contact permission | Explicit task/phase and body-pair rules; a target label is never a global collision exemption. |
-| Failure behavior | Explicit rejection/fallback/abort with reasons; no silent barrier removal or unvalidated replacement torque. |
+- The Jev repository owns all new project code and documentation. FRAX, OSCBF,
+  and CBFpy are read-only upstream dependencies.
+- Reuse the existing controller, robot computations, and CBFpy backend rather
+  than replacing their implementations in the new project.
+- Ground-truth scene geometry and robot state are permitted initially. The
+  initial brief allows spheres/ellipsoids and multiple primitives per object.
+- The candidate-generation/selection idea remains an experiment to investigate,
+  not an already validated method or a frozen Jev template.
+- Consequential ambiguities belong to Nihar. The coding agent surfaces them
+  with evidence and alternatives; ordinary implementation details can evolve
+  naturally without individual approval.
 
-These choices make the implementation direction explicit. Rows marked proposed
-are recommendations for the initial build, not a claim that every detail has
-already been approved or tested. Revisit them deliberately if upstream interfaces
-or the eventual task make them unsuitable.
+### Approved planning approach
 
-### Decisions deliberately deferred
+Proceed one small step at a time, review the outcome with Nihar, then decide
+what comes next. Future steps and their detailed choices are not automatically
+approved because they appear in this document. Templates and orchestration are
+research questions, not a fixed integration recipe.
 
-- Repository/package name and GitHub visibility, at repository-creation time.
-- First exact task, scene assets, success thresholds, and grasping scope; reaching
-  is the proposed integration milestone, not the final manipulation claim.
-- Execution machine, Jev credentials/access, SDK version, and exact dependency
-  lock; none is needed to write the architecture, all are needed before runs.
-- Control/selection rates, API timeout/retry/expiry values, capacity buckets,
-  probability/debounce thresholds, and numerical acceptance tolerances.
-- Final candidate family, cost normalization/weights, robot-group mapping, and
-  prompt/question wording; initial proposals are recorded above for review.
-- Detailed gripper/payload modeling, camera calibration/noise treatment, moving
-  obstacles, and any real-robot stopping or deployment policy.
-- Benchmark sizes and statistical reporting details. Performance, Jev selection
-  quality, conservatism/safety tradeoffs, and novelty need evidence, not a design
-  decision declaring them solved.
+Keep a lightweight record of decisions and why they were made. When a question
+becomes relevant, distinguish a true correctness/interface constraint from a
+preference, an inherited upstream setting, or an untested hypothesis. Do not
+invent an answer solely to make the plan look complete.
 
-### Extension seams to preserve, not implement now
+### Approved immediate choices
 
-For RGB-D, the scene provider should handle calibrated depth back-projection,
-segmentation/tracking, metric object bounds, coordinate transforms, and uncertainty.
-It supplies the same scene contract as ground truth. RGB images or a visualized
-depth image may provide Jev with context, but are not a replacement for metric
-geometry processing. A ground-truth coverage certificate does not automatically
-transfer to an incomplete point cloud or an occluded object.
+Nihar approved these choices for the first checkpoint:
 
-For active perception, retain observation timestamps, object revisions, optional
-images/uncertainty, and camera transforms. A future task/policy extension can request
-another viewpoint when geometry is inadequate. This requires explicit observation
-actions and safe motion; merely updating a constraint list is not active perception.
-Do not introduce an agent/planner framework before that capability is requested.
+1. Run the existing FRAX OSCBF simulation demo from the Jev repository, without
+   new Jev functionality or edits to any of the three upstream repositories.
+2. Use `uv` with an isolated project environment and the existing read-only
+   upstream checkouts.
+3. Try the current Mac first; report compatibility problems before changing course.
 
-For learned policies, preserve the action adapter and filter boundary. For richer
-primitives, preserve candidate generation/validation separately from selection.
-For moving obstacles, extend the dynamics/time-derivative model explicitly rather
-than only changing the perception implementation.
+These are approved choices, not a claim that setup or the demo has been executed.
 
-### Intended build order, once implementation is requested
+### Questions to revisit only when relevant
 
-1. Create the independent repository and pinned dependency references; establish
-   the single upstream-adapter boundary without changing the originals.
-2. Define the shared records, configuration construction, and replaceable provider,
-   task, policy, selector, and control signatures.
-3. Connect existing FRAX/OSCBF/CBFpy implementations through the adapter, keeping
-   upstream dynamics, nominal-controller math, and optimization in their owners.
-4. Add conservative candidate generation and a deterministic/replay selector for
-   plumbing, then the interchangeable Jev selector. Mock output is not Jev evidence.
-5. Add proposal validation, immutable constraint snapshots, bounded update ownership,
-   and explicit diagnostics/failure reporting.
-6. Only then proceed to the separately agreed compatibility checks, simulation
-   runs, and evaluation gates in Sections 9 and 11.
+The first new manipulation task, final hardware, geometry family, margin selection,
+robot groups, template structure, query/update policy, failure handling, dependency
+packaging beyond the initial local setup, and evaluation protocol can be decided
+at the step that needs them. This is not a questionnaire that must be completed
+before starting any work.
 
-Current deliverable: this planning document. No repository creation, dependency
-installation, implementation, billed model calls, or new test runs are authorized
-by the documentation request itself.
+Other mentor proposals remain pending separate approval, including the precise
+collision-risk/interaction selection criteria, Jev-selected uncertainty margins,
+additional primitives such as half-spaces, model/query-frequency comparisons,
+and the expanded viewing/evaluation workflow. The approved planning approach and
+three immediate choices above do not silently settle those other research choices.
 
-## 14. Engineer handoff: initial implementation contract
+### Extension considerations, not infrastructure to build now
 
-Use this section as the bounded coding brief when the project owner explicitly
-commissions implementation. It sets the initial engineering baseline; it does not
-authorize coding, GitHub publication, model spending, or runs merely because this
-document was shared. Earlier proposals outside this baseline remain proposals.
+Ground-truth observations may later be replaced with calibrated RGB-D estimates.
+Incomplete observations do not inherit the ground-truth coverage certificate.
+A visualized depth image is not a substitute for metric geometry processing.
 
-### First deliverable
+Active perception would require explicit viewpoint/observation actions, not
+merely refreshing constraints. Learned policies would need an action adapter;
+moving obstacles need the dynamics/time-derivative treatment in Section 6.
+Keep those distinctions in mind without designing every extension in advance.
 
-Build the standalone framework for **ground-truth, static-scene reaching with the
-Panda/MuJoCo integration**, before adding grasping or camera-based perception.
-This is an integration milestone toward the manipulation brief, not its full
-completion. The code should connect:
+Current deliverable: this document revision. No installation, implementation,
+billed API calls, or new runs are started by updating the plan.
 
-```text
-ground-truth scene + task -> candidate geometry -> selector proposal
-    -> validation/update manager -> accepted constraint snapshot
-scripted EE command -> existing OSC -> nominal torque -> CBFpy -> simulator adapter
-```
+## 14. Engineer handoff: one checkpoint at a time
 
-Include the contracts from Section 3, the candidate family from Section 4 (implement
-sphere covers first, then the enclosing ellipsoid), a deterministic/replay selector,
-and an interchangeable Jev adapter. Keep live Jev optional so API access is not
-required to assemble the framework; never silently substitute mock output for Jev.
-Support explicit all-off/all-on/adaptive modes for later evaluation, with physical
-actuator limits in every mode. This deliverable is source integration, not a
-completed benchmark or evidence of safe manipulation.
+This handoff replaces the earlier full-framework-first implementation contract.
+The engineer is not expected to prebuild every module, record, selector mode,
+worker, geometry option, or benchmark before showing a useful result.
 
-### Architecture baseline to follow
+### Approved first step: reuse the existing demo
 
-- Create an independent package using the small layout in Section 2. Reference
-  pinned upstream checkouts as in Section 10; do not copy implementations or edit
-  the original three repositories. Confirm repository name/visibility before
-  creation or publication rather than inventing them.
-- Reuse FRAX robot computations and its adapted `OSCBFTorqueConfig`, OSCBF's
-  standalone pose controller, and CBFpy's differentiation/QP/solver path. Keep
-  source-loading compatibility code in `upstream.py`. Do not add a second robot
-  model, controller implementation, or optimizer.
-- Generate numeric geometry deterministically; Jev selects valid candidate IDs
-  and avoidance groups. Keep CBF gains fixed initially and contact authorization
-  in explicit task rules, not model-generated code or unrestricted model output.
-- Separate policy, scene/task providers, geometry generation, selection, and
-  filtering through the documented records/functions. Use one owner for accepted
-  constraints, immutable snapshots, and a bounded background selector. No network
-  calls or changing Python lists inside the jitted control calculation.
-- Implement explicit rejection/fallback/failure reporting. Never silently discard
-  excess constraints, disable protections, change solvers, or apply an unvalidated
-  replacement torque to continue an episode.
+The agreed objective is to run the existing FRAX OSCBF simulation demo from the
+Jev repository, without new Jev functionality and with all three upstream
+repositories unchanged. Use `uv` and an isolated project environment with the
+existing read-only upstream checkouts. Try Nihar's current Mac first, and report
+compatibility problems before changing course.
 
-### Deferred from this deliverable
+These choices define the next implementation checkpoint; recording them does not
+itself perform installation, add implementation code, or run the simulator.
 
-Camera detection/RGB-D reconstruction, active perception, learned policies,
-grasping/contact transitions, finger/payload modeling, independent moving obstacles,
-real-robot deployment, benchmark runs, and tuning are later work. Preserve extension
-interfaces; do not implement these speculatively. Future camera observations must
-distinguish wrist and scene views, including each view's timestamp, frame, calibrated
-intrinsics, and camera-to-world transform; reserve this contract without building
-the perception stack now.
+Use the smallest natural entry point/adapter needed. Determine the actual
+dependency/import requirements and report mismatches rather than quietly copying
+code or changing upstream files. Do not add a Jev pipeline, a new task suite,
+capacity management, or an orchestration framework merely because the eventual
+system may need them.
 
-### Engineer discretion versus owner review
+An observable outcome could be the baseline demo running through that entry point,
+with a brief explanation of what was reused and what remains unverified. If the
+environment blocks execution, report the exact blocker and the useful work already
+done; do not label an unexecuted integration as validated.
 
-The engineer may choose local variable/helper names, private function organization,
-serialization details, and ordinary packaging mechanics consistent with the stated
-contracts. Keep settings centralized and document assumptions.
+### Review the result, then choose the next step
 
-Bring back changes to research scope, public data/action semantics, units/frames,
-upstream reuse strategy, primitives/coverage rules, Jev authority, contact permissions,
-mandatory protections, failure behavior, or dependency/backend strategy. If an
-upstream adapter is incompatible, report the exact interface mismatch and proposed
-alternative; do not quietly replace it with copied code or another library.
+At the check-in, show what worked, what failed or was surprising, and the few
+decisions now needed. Agree with Nihar on the next small objective based on that
+evidence. It might be inspecting primitive coverage, examining Jev decisions on
+a tiny scene, changing an interface, or resolving a compatibility issue. This is
+not a mandatory sequence, and later tasks may change after each result.
 
-Numerical rates, timeouts, confidence thresholds, margins, capacity limits, and
-solver acceptance thresholds remain configurable and unvalidated. Earlier examples
-must not become hidden requirements. Missing run-critical settings should be
-reported explicitly before execution, not filled with undocumented guesses.
+When selection work begins, start with inspectable examples and easily editable
+questions/orchestration. Review its outputs before committing to a taxonomy,
+call structure, confidence policy, or refresh strategy.
 
-### Definition of done for the coding handoff
+### Engineer discretion and owner decisions
 
-Deliver the source package, explicit dependency references, configuration schema,
-and documented entry point assembling the full initial pipeline. Include a short
-README describing setup, data flow, selector/mode selection, swap points, unresolved
-compatibility issues, and which settings still need confirmation before runs.
-Record any deviations from this contract. No placeholders may be presented as
-completed Jev, geometry, or CBF integrations.
+Normal file organization, helper functions, implementation mechanisms, and local
+refactors can follow what is simple and natural. The example layout is not an
+acceptance checklist. Avoid speculative abstractions and do not require user
+approval for every routine coding detail.
 
-Code delivery and runtime acceptance are separate checkpoints. The verification
-gates in Section 11 still apply before research runs; unexecuted integrations must
-be labeled unverified. Installing dependencies, using billed APIs, and running
-simulations/benchmarks remain subject to the separately agreed execution scope.
+Ask Nihar before consequential changes to research scope, safety/contact
+assumptions, model authority, or upstream reuse. Record meaningful assumptions
+and unresolved ambiguities. If an upstream interface is incompatible, explain
+the mismatch and options rather than silently editing the dependency.
+
+For each agreed step, keep its code, relevant settings, a short usage explanation,
+and the evidence/status needed for review. Apply Section 11's checks as their
+features are introduced, not as a demand to implement the final system first.
+Installation, model spending, simulator runs, and hardware work follow the
+separately agreed execution scope. This document update starts none of them.
