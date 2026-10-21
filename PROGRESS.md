@@ -4,11 +4,13 @@ Updated: 21 October 2026.
 
 ## Current checkpoint
 
-### Complete locally: richer selection, unseen evaluation and simulated perception
+### Complete: richer selection, unseen evaluation and simulated perception
 
 The D18 work is implemented and evaluated. Start at
-`artifacts/pickup/review/index.html`. Nihar requested publication on 21 October
-(D19); pre-push verification is underway. All three upstream worktrees
+`artifacts/pickup/review/index.html`. At Nihar's request (D19), source checkpoint
+`b1c5209d1c386e0c2de0839882f3eacb7879e266` was pushed to `origin/main` on
+21 October; GitHub's remote main hash was independently verified. Generated
+galleries, raw evidence and the portable bundle remain local/ignored. All upstream worktrees
 remain clean/read-only. No hardware, frontier-provider comparison or learned
 detection was added. This is a software/research checkpoint, not the dream
 system or a formal safety claim.
@@ -102,6 +104,9 @@ Pre-push checks on 21 October: 101 tests pass again in 49.283 s; the 22 staged
 source/test/fixture/doc files contain no configured credential or generated
 artifact. All upstream worktrees remain clean, and the fetched remote main
 matched the starting commit before publication.
+The implementation push completed successfully; this publication-status note
+is a documentation-only follow-up. No new experiment/provider call or upstream
+change was made during publication.
 
 #### D18 implementation history (complete; live counts below are superseded)
 

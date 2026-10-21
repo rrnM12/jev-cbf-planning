@@ -25,6 +25,8 @@ implementation checklist. Follow the user's latest directions if they differ.
   generated trajectories/galleries and the 2 GB review bundle local/ignored.
   Verify tests, staged credential exclusion, upstream cleanliness and remote
   commit identity. This request does not authorize new experiments/API calls.
+  Source checkpoint `b1c5209` is now published on `origin/main` and its remote
+  hash verified. Generated evidence/bundle stay local; no further automatic work.
 - Active authorization (21 October; D18): Nihar approved autonomous work through
   selection diagnosis/improvement, comparison with a geometric rule, stronger
   unseen static-clutter pickup evaluation, simulated wrist/scene RGB/depth
