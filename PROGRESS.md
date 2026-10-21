@@ -475,6 +475,14 @@ Decide relevant questions with Nihar when the corresponding step is chosen.
   and lockfile, and documentation. Credentials, environments/caches, and generated
   reports remain local/ignored. This request does not approve controller work.
 
-Publication requested; commit/push verification is recorded below once complete.
+- 20 October 2026: published implementation snapshot `3d6fd4e` to
+  `https://github.com/rrnM12/jev-cbf-planning` on `main`. Push succeeded;
+  `HEAD` and `origin/main` matched, with a clean working tree. Staged-content
+  checks found no configured API key, private-key headers, or GitHub-token
+  patterns. `.env.local`, caches/environments, and generated reports were not
+  committed. The three upstream repositories were not changed.
+
+The completed implementation checkpoint is published. Controller integration is
+still proposed, not approved or implemented.
 The deleted stale parent architecture copy remains recoverable from the
 repository's original commit `b347afe`.
