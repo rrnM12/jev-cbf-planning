@@ -1,12 +1,15 @@
 # Jev-selected CBFs: evolving architecture and working plan
 
 Status: a living research plan, not a frozen implementation specification.
-Updated 21 October 2026. The four-item pickup gallery and approved follow-on
-software study are implemented. Start at `artifacts/pickup/review/index.html`.
+Updated 21 October 2026. The four-item pickup gallery and original follow-on
+software study are implemented. The further approved extension is complete locally:
+richer sphere families, selection diagnosis, harder unseen layouts, simulated
+scene/wrist depth-derived clutter geometry and controlled observation/model
+failures. Start at `artifacts/pickup/review/index.html`; PROGRESS.md has live status.
 The original FRAX nominal torque equations/gains remain in use, CBFpy performs
 filtering, and all three upstream repositories remain read-only.
 
-The latest corrected replication has 72 runs on the same 12 static layouts used
+The prior corrected replication has 72 runs on the same 12 static layouts used
 in the original held-out study. Safe pickups: off 11/12; all-on 12/12; geometric
 rule 12/12; all-objects/Jev-geometry 6/12; Jev once 6/12; Jev repeated 12/12.
 Repeated querying resolves coarse-cover stalls, but does not outperform the
@@ -32,15 +35,51 @@ reference opening. The seven-DOF CBF dynamics omit finger/contact/payload forces
 the 0.05 m/s² scene-inequality guard is empirical, not calibrated uncertainty.
 Target masks protect 16 arm spheres while permitting tool overlap; native
 evaluation still rejects non-finger contact. Finger envelopes assume nominal
-0–4 cm travel, and native soft-limit overshoot is reported. No perception,
+0–4 cm travel, and native soft-limit overshoot is reported. No learned detection,
 learned policy, global planner, learned body pairing, frontier-model comparison,
 formal contact/continuous-time safety, or real-time certification is claimed.
 
-The completed work used 114 new logical Jev requests, estimated token cost
+The prior completed package used 114 new logical Jev requests, estimated token cost
 $0.067044516, with $0.941359104 conservatively reserved against the $7.50 cap.
 PROGRESS.md records decisions, attempts, failed drafts, corrections and checks.
 The larger research system/dream desiderata are not finished by this software
 proof of concept; future choices below remain replaceable proposals.
+
+Current extension boundaries: small/rich families use 1/2/4 versus
+1/2/3/4/5/6/8 primitives, including shape-aware cylinder slabs and useful box
+grids. More primitives need not improve pointwise clearance or runtime. Optional
+terminal-reference features describe cover obstruction, not a collision-free plan.
+The common prompt and orchestration remain experiment inputs, not a settled
+research taxonomy. The geometric rule and all-object/least-excess baseline use
+the same candidate family; findings must not assume semantic-model superiority.
+
+`perception.py` backprojects calibrated scene/wrist depth and fits table-supported
+clutter boxes. Instance identities remain simulator-oracle scaffolding; target
+geometry/pose and robot/camera kinematics remain known. The native physical scene
+is separate evaluation truth and never replaced by fitted boxes. Jev receives
+structured measurements, not raw RGBD. Visible-point fits and experimental 5 mm
+padding do not establish full-object containment or calibrated uncertainty.
+
+Startup handling is an evidence-driven correction: some
+coarse/noisy covers overlap the initial robot. The old failures stay retained.
+New runs check h and the RD2 transformed barrier before allowing actuation, choose
+an admissible all-object representation when one exists, otherwise reject the
+unsupported setup rather than silently shrink margins or omit clutter. This is
+not a hardware safe-stop design or a guarantee about unobserved surfaces.
+
+The extension has 96 development, 168 frozen unseen and 90 camera/fault physical
+runs, all independently re-evaluated. On the 12 new designed layouts, both Jev
+once/repeated and the non-model least-excess/rule baselines improve from 6/12 safe
+pickups with small covers to 12/12 with rich covers. The rule is still cheaper
+geometrically; repeated polling adds no completion benefit here. Initial repeated
+classifications disagree only on conditional geometry for omitted objects, not
+the proposed clutter policy. These findings do not establish Jev superiority.
+Six separate correction checks yield four audited pickups and two startup
+refusals; one predicted refusal was wrong because a two-sphere candidate was
+admissible where four/eight-sphere candidates were not. Raw predictions remain.
+101 tests pass. Cumulative estimated token cost is $0.366746268 (374 logical
+provider calls), conservative reservations $3.088318464 under the original $7.50.
+No push or additional research experiment is included in completion.
 
 Historical dynamic infrastructure: `artifacts/showcase/dynamic_v1/index.html`
 contains the earlier moving-object reaching check, not the current task family.
@@ -228,6 +267,12 @@ simulator --------------------------------------------> independent evaluator
 The accepted snapshot feeds the filter; perception and Jev never run inside the
 torque-control calculation. Robot state is supplied to both control and selection
 as needed; the diagram separates their update paths, not their physical state.
+In the current simulated-depth prototype, camera capture/fitting and evidence
+logging run synchronously in a periodic before-control hook. Only Jev requests
+have a background worker. This is logical separation, not a claim that sensor
+I/O cannot delay a control step. Moving acquisition to a separately owned native
+rendering/sensor worker is a future measured-performance change, not implemented
+hard-real-time isolation or active viewpoint planning.
 
 Prefer ordinary functions and small data records. Add abstractions only when an
 actual substitution or maintenance need justifies them. The layout below is one
@@ -949,7 +994,7 @@ evidence. It might be inspecting primitive coverage, examining Jev decisions on
 a tiny scene, changing an interface, or resolving a compatibility issue. This is
 not a mandatory sequence, and later tasks may change after each result.
 
-Current handoff: the static-clutter pickup gallery and approved follow-on software
+Prior handoff: the static-clutter pickup gallery and original follow-on software
 study are complete locally. Open `artifacts/pickup/review/index.html`. Six methods
 are compared on 12 layouts, with original failures and the corrected replication
 kept separate. Repeated Jev achieves 12/12 safe pickups versus 6/12 once; all-on
@@ -958,8 +1003,9 @@ this does not establish Jev superiority. All 72 corrected trajectories pass the
 independent native audit; 89 offline tests pass. The completed package used 114
 logical requests, with estimated token cost $0.067044516 under the $7.50 cap.
 Final link, playback, credential, source-archive and no-new-call resume checks
-passed. No further experiment is running. Future research choices and publication
-follow the next user direction; hardware and perception are not implemented.
+passed. This is preserved historical evidence, not the running extension's final
+result. Hardware and learned detection remain unimplemented; the newly approved
+depth-derived-clutter extension is described at the top and in PROGRESS.md.
 
 The current reusable implementation is deliberately small:
 
@@ -978,6 +1024,8 @@ The current reusable implementation is deliberately small:
 | `run_pickup.py` | Frozen static pickup experiments, source snapshots, six-method comparisons, safe completed-run resume, and layout preparation. |
 | `api_budget.py` | Persistent dollar-cap reservations and reported-usage estimates around the existing Jev SDK. |
 | `analyze_pickup.py` / `pickup_gallery.py` | Independent native audits, geometry costs, CPU profiling, recorded-answer diagnosis, and synchronized pickup review. |
+| `perception.py` | Calibrated simulated RGB/depth, oracle-instance segmentation, depth-only clutter fits and accepted measurement updates; known target/robot retained. |
+| `pickup_layouts.py` / `study_pickup.py` | Geometry-qualified fixtures and frozen count/context, unseen-layout and camera/fault studies using the existing runner. |
 
 This is infrastructure exercised by static pickup and earlier reaching fixtures, not a finished
 perception-driven robot architecture. Editable scene/question JSON and ordinary function boundaries are
@@ -1004,6 +1052,9 @@ and the evidence/status needed for review. Apply Section 11's checks as their
 features are introduced, not as a demand to implement the final system first.
 Nihar's latest authorization included the four pickup items and seven follow-on
 items, with autonomous diagnosis/fixes and up to $7.50 total new Jev usage. That
-software package is complete. Hardware, perception, external publication, and
+software package is complete. The subsequent D18 authorization includes selection,
+unseen static layouts, depth-derived clutter and imperfect-information/model
+failure studies, plus richer sphere counts. The existing cumulative $7.50 cap
+still applies. Hardware, frontier-provider comparisons, new push/publication and
 unselected research extensions remain outside that scope. Report actual results
 in PROGRESS.md; preserve failures rather than silently replacing old evidence.

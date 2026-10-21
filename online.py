@@ -18,6 +18,28 @@ from run_suite import read, save
 from runtime_cbf import guarded_cbf, sphere_runtime_config
 
 
+class FaultInjectedJev:
+    """Explicit robustness wrapper; injected failures make NO HTTP call."""
+    def __init__(self,ask,config,output):
+        self.ask,self.config,self.output=ask,config,output
+        self.index=0;self.events=[]
+        delay=config.get('delay_s',0.)
+        if not np.isfinite(delay) or not 0<=delay<=30:raise ValueError('fault-study delay must be 0–30 s')
+
+    def __call__(self,request):
+        self.index+=1
+        event={'logical_call':self.index,'snapshot_at_s':request['state'].get('snapshot_time_s',0.)}
+        if self.index in self.config.get('fail_calls',[]):
+            event['status']='injected unavailable response; no provider call or budget charge'
+            self.events.append(event);save(self.output/'model_fault_events.json',self.events)
+            raise ValueError('INJECTED model-unavailable fault; no provider request was sent')
+        delay=self.config.get('delay_s',0.) if self.index in self.config.get('delay_calls',[]) else 0.
+        if delay:time.sleep(delay)
+        event.update(status='provider adapter called',injected_delay_s=delay)
+        self.events.append(event);save(self.output/'model_fault_events.json',self.events)
+        return self.ask(request)
+
+
 def object_motion(objects, at):
     """Continuous positions and right-hand velocities of a scripted fixture."""
     positions, velocities = [], []
@@ -116,7 +138,8 @@ class ConstraintRuntime:
             raise ValueError("unknown online comparison mode")
         self.scene, self.settings, self.base = scene, config, base_request
         self.mode, self.output, self.goal_q = mode, output, np.asarray(goal_q)
-        self.capacity = 4*len(scene["objects"])
+        self.object_capacity = max(4,max(len(c["radii_m"]) for o in base_request["state"]["objects"] for c in o["candidates"]))
+        self.capacity = self.object_capacity*len(scene["objects"])
         self.policy = {obj["id"]: "box-split-4" for obj in base_request["state"]["objects"]}
         if mode == "off":
             self.policy = dict.fromkeys(self.policy)
@@ -165,9 +188,9 @@ class ConstraintRuntime:
                 continue
             candidate = next(c for c in obj["candidates"] if c["id"] == candidate_id)
             n = len(candidate["radii_m"])
-            if n > 4:
-                raise ValueError("candidate exceeds current four-slot object capacity")
-            slots = slice(4*index, 4*index+n)
+            if n > self.object_capacity:
+                raise ValueError("candidate exceeds the experiment's frozen object capacity")
+            slots = slice(self.object_capacity*index, self.object_capacity*index+n)
             centers[slots] = np.asarray(candidate["centers_object_m"]) + positions[index]
             radii[slots], speeds[slots], enabled[slots] = candidate["radii_m"], velocities[index], True
         return centers, radii, speeds, enabled, float(at)

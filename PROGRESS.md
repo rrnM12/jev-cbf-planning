@@ -4,6 +4,218 @@ Updated: 21 October 2026.
 
 ## Current checkpoint
 
+### Complete locally: richer selection, unseen evaluation and simulated perception
+
+The D18 work is implemented and evaluated. Start at
+`artifacts/pickup/review/index.html`. Nihar requested publication on 21 October
+(D19); pre-push verification is underway. All three upstream worktrees
+remain clean/read-only. No hardware, frontier-provider comparison or learned
+detection was added. This is a software/research checkpoint, not the dream
+system or a formal safety claim.
+
+Frozen studies: 96 development rollouts (four seen layouts, 2×2 counts/context),
+168 unseen rollouts (12 new geometry-qualified layouts, small/rich candidates,
+seven methods), and 90 camera/error/fault rollouts (nine conditions, two seen
+layouts, five methods). All 354 trajectories pass independent native contact,
+lift/state/hash/source checks. Failure reproduction is an audit pass, NOT a safe
+task completion. Inputs and producer sources are preserved in each dataset;
+later analysis source is also hash-bound and archived. Original raw outcomes,
+failed drafts and pre-correction summaries remain intact.
+
+| New unseen layouts | Small 1/2/4: safe pickups | Rich 1/2/3/4/5/6/8: safe pickups |
+| --- | --- | --- |
+| Scene CBFs off | 9/12 | 9/12 |
+| All clutter / fixed four | 3/12 | 3/12 |
+| All clutter / least excess | 6/12 | 12/12 |
+| Geometric rule | 6/12 | 12/12 |
+| All objects / Jev geometry | 6/12 | 12/12 |
+| Jev once | 6/12 | 12/12 |
+| Jev repeated | 6/12 | 12/12 |
+
+Richer geometry helps these designed fixtures, including non-model baselines.
+Rich once/repeated use 296 enabled pairs / 0.436 L mean excess; the rule uses
+255.7 / 0.400 L with the same completion. Re-querying adds no completion benefit
+here, and Jev superiority is not established. All 48 predeclared classification-
+only repeats are complete: three initial answers in each of 24 groups, only the
+first used for physics. 13/24 groups differ on some raw answers, but 0/24 differ
+on proposed clutter policy; differences are geometry conditional on omission.
+
+Camera control uses measured depth-derived clutter boxes, not physical truth
+for barrier positions/dimensions. Scene/wrist RGB/depth are saved; segmentation
+instance IDs, target geometry/pose and robot/camera kinematics remain known.
+The table support plane and 5 mm padding are assumptions, not calibrated
+uncertainty or full-object coverage. Calibration bias creates sampled coverage
+gaps. Original noisy cases lift physically but fail initial modeled admissibility;
+the large-bias one-shot layout 03 stalls without unwanted contact. Delayed and
+unavailable-model paths retain existing policy, not a certified safe fallback.
+One late response is explicitly ignored. Static clutter limits what stale-frame
+success establishes. `camera_control_v1/fault_diagnostics.json` distinguishes
+injected faults, actual query errors and observation ages.
+Only Jev has a background worker: periodic camera capture/fitting and evidence
+logging currently execute synchronously before control and can delay a step.
+Hard-real-time acquisition isolation and active viewpoint planning are not built.
+
+Evidence-driven startup correction (separate from frozen results): selection
+modes now initialize with the least-excess currently RD2-admissible candidate for
+every object, keeping mandatory target/intrinsic protections. Fixed-four keeps
+its exact baseline meaning. If no full-supplied-shape candidate is admissible,
+the simulator refuses before actuation; no substitute torque/result/trajectory
+is fabricated. `startup_validation_v1` retains six diagnostic inputs: four full
+physical safe pickups (each independently audited) and two refusals. All six
+startup contracts pass. One predicted refusal was wrong: noisy layout 03 has a
+valid two-sphere cover where four/eight-sphere covers overlap the initial arm.
+Its raw expectation is retained; `startup_report.json` separates the actual
+contract from the original 5/6 correct outcome predictions. Refusal is not a
+safe pickup or a hardware safe stop. Covers are not pointwise nested.
+
+101 tests pass in 49.275 s (`regression_d18.json`). Completed study entry points
+also pass a resume check with provider/physics calls trapped and an unchanged
+ledger (`resume_check_d18.json`). Geometry/volume, frame/depth, native gripper,
+mandatory masks, startup/no-actuation, observed-vs-physical separation, injected
+faults and variable-capacity playback are covered. Current browser checks cover
+86 HTML pages / 1,959 local references / 62 playback pages, with no broken links;
+controls are exercised in a mocked DOM, not full-browser visual certification.
+Native rendered camera and small/rich final frames were inspected directly.
+
+Cumulative ledger: 374 logical provider calls, estimated reported token cost
+$0.366746268, conservative reservations $3.088318464 against the original $7.50.
+No more calls are required. Security check found no configured key in 6,929
+source/result files; `.env.local` is ignored/untracked and mode 0600. All upstream
+Git worktrees remain clean. CPU microbenchmarks are about 0.24 ms small and
+0.32–0.42 ms rich with fixed allocated rows, not a real-time-loop guarantee or
+proof of masking speedup.
+
+Final packaging checks pass. `artifacts/pickup/review_bundle.zip` is a local
+2,054.9 MB portable source/results/viewing bundle (8,630 members), with no key,
+environment, upstream copies or upload. Every archived evidence/source hash and
+ZIP CRC was checked; all 86 HTML pages / 1,959 archive-local references resolve.
+The live local gallery has one extra download link (1,960 references); its 62
+playback pages pass controls/atlas checks. The bundle contains the source/doc
+snapshot immediately before this final packaging-status paragraph and host-only
+download link; its own member manifest is authoritative for that snapshot.
+`bundle_checks_d18.json`, `handoff_checks_d18.json`, `review_checks.json` and
+`provenance_checks_d18.json` record the checks. Generated evidence remains local
+and ignored. No work is running or further automatic API call needed. Await the
+next research direction. D19 authorizes source/test/fixture/documentation
+publication only; the generated review bundle and evidence stay local/ignored.
+Pre-push checks on 21 October: 101 tests pass again in 49.283 s; the 22 staged
+source/test/fixture/doc files contain no configured credential or generated
+artifact. All upstream worktrees remain clean, and the fetched remote main
+matched the starting commit before publication.
+
+#### D18 implementation history (complete; live counts below are superseded)
+
+Nihar approved points 1–5 on 21 October (D18), with autonomous diagnosis and no
+routine human check-ins: improve/investigate selection, establish value against
+geometry alone, freeze a stronger unseen evaluation, add simulated wrist/scene
+RGB/depth geometry estimation, and test imperfect information/model failures.
+Also test the hunch that sphere counts beyond 1/2/4 help. Starting source is the
+published `cae821a`; all old datasets stay intact. Keep the same persistent Jev
+budget (114 requests / $0.941359104 reserved so far), upstreams read-only, static
+clutter pickup only, no hardware/frontier-provider usage or automatic push.
+
+Working order follows evidence: first isolate candidate-count and terminal-
+clearance features on existing development scenes; then freeze new layouts and
+protocol before new model answers; then add and independently inspect a camera-
+to-geometry path and controlled error/failure studies. Camera segmentation labels
+may initially come from the simulator but must be labeled as oracle scaffolding.
+Visible-surface bounds are not guaranteed whole-object bounds. Keep perception
+geometry separate from native truth used for contact/coverage evaluation.
+
+First implementation: parameterized frozen object-slot capacity (legacy defaults
+remain unchanged), candidate counts 1/2/3/4/5/6/8, extra box grids, terminal
+pregrasp/grasp/lift clearance fields, and an editable common prompt. 91 tests
+pass, including real eight-slot CBF packing, native finger protection, terminal
+feature/criteria consistency and richer-cover boundary/volume diagnostics.
+`study_pickup.py` freezes a 2x2 development ablation (small/rich counts × phase/
+terminal features) on four already-seen diagnostic layouts. All conditions and
+offline baselines precede live answers. This is development, not unseen evidence.
+Current pricing rechecked against official TypeSafe models docs: unchanged;
+keep Jev 1.13 pinned for comparability rather than silently migrate to 1.14.
+
+Development ablation completed at `artifacts/pickup/selection_development_v1`
+(four conditions × four seen layouts × six methods = 96 physical rollouts).
+Once/repeated success: small_phase 4/4,4/4; small_terminal 4/4,4/4;
+rich_phase 3/4,4/4; rich_terminal 4/4,4/4. Rich terminal once excess is 0.371 L
+vs small terminal 1.559 L, but mean enabled pairs rise 180→267. Rich rule is
+still stronger: 0.346 L / 247.7 pairs and 4/4. The common revised prompt already
+fixes these selected stalls with small counts; do not attribute all improvement
+to counts/features or claim significance from four seen cases. Original older
+results remain intact. `selection_study_v1/terminal_diagnosis.json` independently
+shows negative terminal clearance for the six original one-shot stalled covers.
+
+Camera module `perception.py`: calibrated native scene + hand-mounted wrist
+RGB/depth, metric backprojection, oracle instance labels, depth-only fitted
+clutter AABBs, and explicit known target/robot kinematics. Camera inspection v3
+and controlled sensor study are at `artifacts/pickup/camera_inspection_v3`.
+Clean 5 mm padded fits had zero sampled misses there; a 25/-15 mm calibration
+bias leaves about 14%/12% of bottle/box volume outside the evaluated cover.
+These are diagnostics, not calibrated bounds. Mac GL warns of limited depth
+precision; backprojection was checked against native surfaces/known projections.
+No oracle clutter dimensions enter fitting. Target geometry/pose and instance
+identities remain known: do not call this fully learned perception.
+
+Actual closed-loop depth-clutter pilot `perception_pilot_v1` completed a safe
+pickup in 4.846 s with five accepted measurement updates, no model calls.
+Tests verify observed boxes reach barrier parameters without replacing physical
+cylinders or mutating saved requests; perturbing stored physical clutter centers
+after capture does not alter the estimated barrier positions. Full regression
+currently 96 passing tests (39.466 s) before the final freshness bookkeeping edit.
+Added all-on/least-excess geometry baseline and explicit injected unavailable/
+delayed model adapters; injected failures send no HTTP request or budget charge.
+
+New layout search: `challenge_generation_v1` is complete, retaining every search
+record and its archived generator. Four cover-tradeoff and four near-miss cases
+qualify, but only one of four requested native path hazards qualifies; three
+explicit clear controls are retained, not mislabeled hazards. A second fresh-seed
+pool `challenge_generation_v2` is running (exec session 52221), with more cylinder
+heights and no unnecessary coarse-cover endpoint requirement for the hazard
+stratum. This is still before any model answers for new layouts. Select/freeze
+the final qualified strata using geometry only, preserving pool exclusions.
+
+Next: finish source/testing and freeze `study_pickup.py unseen` (small/rich with
+same terminal prompt, strong all-on/rule baselines, three initial classification
+repetitions with only the original controlling physics), then the camera/error
+study (nine predefined conditions on two seen diagnostic layouts). The latter
+keeps error injection config OUT of model-visible state. No new unseen/camera
+model calls yet. Update exact ledger totals before the next live batch. Do not
+edit frozen producer sources during an unfinished experiment; use new retained
+correction datasets if needed. The D18 work is not complete yet; no push.
+
+Batch launch update: 96 tests pass again (43.192 s), including the all-on/least-
+excess mode and camera/fault privacy checks. Camera preparation smoke also passes.
+Pool v2 is complete (generator archived); selected 12 geometry-qualified unseen
+layouts before answers: 3 native path hazards, 5 cover-tradeoffs, 4 near misses.
+Selection mapping/exclusions are in `challenge_selection_v1.json`; source fixture
+is `examples/pickup_challenge_scenes.json`. Both new batches are now running:
+`unseen_selection_v1` (exec session 48769) and `camera_control_v1` (73918).
+Freeze guards include 13 producer sources; DO NOT edit
+pickup.py/run_pickup.py/online.py/perception.py/geometry.py/study_pickup.py/
+pickup_layouts.py or other SOURCES while these unfinished batches run. Analysis,
+gallery, tests and docs can be improved separately. Current budget before these
+batches: 162 logical provider requests; estimated $0.119955528, reserved
+$1.337720832 against the original $7.50. Three classification repetitions are
+predeclared for unseen initial states (only original controls a rollout).
+
+Live status checkpoint: development is complete (96/96 physical runs), and the
+camera/error/fault study is complete (90/90). The unseen study is still running
+in session 48769: 69/84 small-family and 48/84 rich-family physical runs recorded
+at this check; the predeclared classification-only repetitions are still pending.
+The persistent ledger has 269 logical provider requests, estimated usage cost
+$0.236503218 and conservative reservations $2.221277184 against the same $7.50.
+These are live counts, not final totals. No new publication/push.
+
+Important failure diagnosis: a physical pickup is not automatically a safe run.
+Some coarse/noisy covers already overlap the modeled robot at t=0 (negative
+scene h2), so their failures must be labeled initial-model inadmissibility rather
+than a later crossing from an admissible start. Sensor-noise cases have no clear
+candidate for one fitted object at the starting pose. Preserve all raw outcomes;
+after the frozen unseen batch finishes, validate initialization/admission handling
+that either selects a genuinely admissible full-object cover or explicitly rejects
+startup. Do not hide this by shrinking margins, dropping an object, overwriting
+the original experiment, or describing zero torque as a safe hardware stop.
+Analysis/gallery/docs may change while the batch runs; producer sources may not.
+
 ### Complete: pickup gallery and approved follow-on study
 
 Start with `artifacts/pickup/review/index.html`. The original four-item gallery,
@@ -868,6 +1080,7 @@ These decisions came from Nihar's explicit directions/approvals in this discussi
 | D15 | Implement the four pickup work items, then continue with the seven evidence-driven follow-on items. | User said "yes good do these things after you get the first 4 work items that you previously mentioned done." Build functional pickup, integrate contact-aware Jev/CBFs, compare methods, and render the gallery, then check reliability/layouts/failures/geometry/prompts/cost/workflow. Additional live-call cap is pending; no push/hardware/upstream edits. |
 | D16 | Up to $7.50 total new Jev API spend during this work, using the supplied key. | User explicitly authorized spending and as many calls as needed within the dollar cap. Supersedes request-count proposals and D15's pending-budget note. Track usage and do not exceed the cap. No other paid provider is authorized. |
 | D17 | Commit and push the completed Jev source checkpoint to the existing GitHub repository. | User said "push this to repo" on 21 October. Publish source, tests, editable fixtures/templates and docs; keep credentials, environments, caches and generated experiment/gallery artifacts local/ignored. No new experiment or upstream edits. |
+| D18 | Autonomously implement/study points 1–5 and richer sphere-cover options. | User approved selection diagnosis, geometric comparison, stronger unseen evaluation, simulated RGB/depth perception and imperfect-information/failure tests; asked to consider more than 1/2/4 spheres and continue without human help. Existing total Jev budget and read-only upstream/static-pickup scope remain; no new push or other paid provider. |
 
 Nihar owns consequential ambiguities; routine local implementation choices do not
 require an approval ceremony. Approval of D02/D03 did not approve all mentor ideas.

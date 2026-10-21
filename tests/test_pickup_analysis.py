@@ -10,6 +10,22 @@ from run_pickup import runtime_versions
 
 
 class FootprintTests(unittest.TestCase):
+    def test_independent_truth_outside_perceived_domain_is_not_ignored(self):
+        request={'state':{'target_id':'target','objects':[
+            {'id':'target','shape':'box','size_m':[.1]*3,'center_m':[0.,0.,0.],'candidates':[]},
+            {'id':'a','shape':'box','size_m':[.02]*3,'center_m':[0.,0.,0.],
+             'candidates':[{'centers_object_m':[[0.,0.,0.]],'radii_m':[.02]}]}]}}
+        trace={'cover_radii_m':np.full((2,8),.02),'cover_centers_m':np.zeros((2,8,3)),
+               'cover_enabled':np.zeros((2,29,8),dtype=bool)}
+        truth=[{'id':'target','shape':'box','size_m':[.1]*3,'center_m':[0.,0.,0.]},
+               {'id':'a','shape':'box','size_m':[.1]*3,'center_m':[1.,0.,0.]}]
+        result=footprint(request,trace,truth_objects=truth,samples=300_000)
+        self.assertAlmostEqual(result['mean_unmodeled_clutter_m3'],.001,delta=.00005)
+        self.assertEqual(result['mean_uncovered_constrained_clutter_m3'],0.)  # Omitted is not automatically a bad cover.
+        trace['cover_enabled'][:,:,4]=True
+        represented=footprint(request,trace,truth_objects=truth,samples=300_000)
+        self.assertAlmostEqual(represented['mean_uncovered_constrained_clutter_m3'],.001,delta=.00005)
+
     def test_optional_sdk_metadata_does_not_block_offline_preparation(self):
         def version(name):
             if name == "typesafe-sdk":

@@ -357,6 +357,8 @@ def run_case(demo, utils, report, mode, *, frax_dir, steps, view=False, all_geom
             failure = f"{type(error).__name__}: {error}"
             if "env" in captured:
                 captured["env"].close()
+            if runtime is not None and hasattr(runtime, 'close'):
+                runtime.close()
     rollout_wall = time.perf_counter() - began
     if not captured.get("scene_hook_used") or any(key not in captured for key in ("config", "cbf", "env")):
         raise RuntimeError(f"upstream integration did not reach expected hooks: {failure}")

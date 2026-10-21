@@ -107,6 +107,23 @@ def make_shape_covers(half_extents_m, *, shape, counts=(1, 2, 4)):
                 center = np.zeros(3); center[axes] = np.array(signs)*half[axes]/2
                 points.append(tuple(map(float, center)))
             covers.append(SphereCover("box-grid-4", tuple(points), (radius,)*4, -1))
+        # Additional counts can tile two or three axes instead of making an
+        # increasingly redundant one-dimensional chain. Minimize cell radius;
+        # each cell is still enclosed independently, preserving full coverage.
+        from itertools import product
+        for count in counts:
+            if count <= 4:
+                continue
+            grids = [(a,b,count//(a*b)) for a in range(1,count+1) for b in range(1,count+1)
+                     if count % (a*b) == 0]
+            grid = min(grids, key=lambda g: (np.linalg.norm(half/np.array(g)),g))
+            if sum(n > 1 for n in grid) < 2:
+                continue  # A prime-count grid is just the existing axial split.
+            cell = half/np.array(grid)
+            axes = [np.linspace(-h+h/n,h-h/n,n) for h,n in zip(half,grid,strict=True)]
+            points = tuple(tuple(map(float,p)) for p in product(*axes))
+            radius = float(np.nextafter(np.linalg.norm(cell),np.inf))
+            covers.append(SphereCover(f"box-grid-{count}",points,(radius,)*count,-1))
     else:
         raise ValueError("shape must be box or cylinder")
     return tuple(covers)

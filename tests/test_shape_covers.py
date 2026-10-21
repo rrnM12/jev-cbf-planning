@@ -40,3 +40,16 @@ class ShapeCoverTests(unittest.TestCase):
         for shape, half in (("ellipsoid", [.1]*3), ("cylinder", [.1, .2, .3])):
             with self.assertRaises(ValueError):
                 make_shape_covers(half, shape=shape)
+
+    def test_richer_counts_and_box_grids_have_full_cell_enclosures(self):
+        counts=(1,2,3,4,5,6,8)
+        for shape in ("box","cylinder"):
+            covers=make_shape_covers([.04,.04,.15],shape=shape,counts=counts)
+            self.assertEqual(len({c.candidate_id for c in covers}),len(covers))
+            self.assertTrue(any(len(c.radii_m)==8 for c in covers))
+            result=evaluate_covers([.04,.04,.15],covers,shape=shape,samples=100_000,seed=15)
+            self.assertTrue(all(c["uncovered_object_samples"]==0 for c in result["candidates"]))
+        cover=next(c for c in make_shape_covers([.04]*3,shape="box",counts=counts) if c.candidate_id=="box-grid-8")
+        for center,radius in zip(cover.centers_m,cover.radii_m,strict=True):
+            corners=np.array(list(product((-1,1),repeat=3)))*.02+center
+            self.assertLessEqual((np.linalg.norm(corners-center,axis=1)-radius).max(),1e-15)

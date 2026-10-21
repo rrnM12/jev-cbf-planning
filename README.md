@@ -6,7 +6,9 @@ infrastructure now prepares actual-Panda scene/motion context, generates sphere
 cover candidates, records Jev choices, runs comparisons, and renders review
 galleries. The current proof of concept performs physical static-clutter pickup:
 fresh Jev answers can add/update/remove enabled constraints while the original
-arm controller keeps running. Perception and hardware are not implemented.
+arm controller keeps running. A simulated scene/wrist RGB/depth path now estimates
+clutter geometry; instance identities and target/robot/camera models remain known.
+Learned detection and hardware deployment are not implemented.
 Older isolated geometry and proxy-selection tools remain available. The larger,
 evolving research plan is in [ARCHITECTURE.md](ARCHITECTURE.md).
 Current progress, verification, blockers, and decision history are in
@@ -17,6 +19,102 @@ Current progress, verification, blockers, and decision history are in
 ```bash
 open artifacts/pickup/review/index.html
 ```
+
+The current extension compares 1/2/4-sphere candidates with a richer
+1/2/3/4/5/6/8 family, adds optional grasp/lift-reference clearance features, and
+tests depth-fitted clutter, calibration/noise errors, stale measurements and
+model outages/delays. Sources, prompts and fixtures remain editable; no controller
+or upstream repository is replaced. See [PROGRESS.md](PROGRESS.md) for live batch
+status, retained failures and source provenance. The extension is complete locally;
+the original frozen experiment and later startup correction are separate.
+
+| Frozen unseen layouts | Small family: safe pickups | Rich family: safe pickups |
+| --- | --- | --- |
+| Scene CBFs off | 9/12 | 9/12 |
+| All clutter / fixed four | 3/12 | 3/12 |
+| All clutter / least excess | 6/12 | 12/12 |
+| Geometric rule | 6/12 | 12/12 |
+| All objects / Jev geometry | 6/12 | 12/12 |
+| Jev once | 6/12 | 12/12 |
+| Jev repeated | 6/12 | 12/12 |
+
+Richer geometry helps these designed fixtures, but geometry-only baselines obtain
+the same completion gain. Rich Jev once/repeated use 296 mean enabled scene pairs
+and 0.436 L excess versus the rule's 255.7 pairs and 0.400 L. Repeated queries
+do not improve completion on this set; no Jev superiority is established.
+Three initial classifications per scene/condition use only the first answer for
+physics: 13/24 groups differ on some answers, but 0/24 differ on proposed clutter
+policy (differences are conditional geometry for omitted objects).
+
+Development uses four already-seen layouts in a frozen 2×2 comparison of counts
+and terminal features (96 runs). Richer terminal-aware one-shot covers reduce
+mean excess from 1.559 L to 0.371 L, while enabled pairs increase 180→267; both
+finish 4/4. The rich geometric rule also finishes 4/4 with 0.346 L and 247.7 pairs.
+This does not establish Jev superiority or a general benefit from more options.
+
+The nine-condition camera/fault study has 90 completed runs on two seen layouts.
+These fit **clutter only** from visible metric depth using oracle instance labels;
+the target geometry/pose remains known. A 5 mm padding is experimental, not
+calibrated uncertainty. Some noisy covers overlap the initial arm configuration;
+those runs are failures even when the object visibly lifts. Initial modeled
+admissibility and later barrier crossings are reported separately. Positive model
+barriers do not prove coverage of unseen surfaces or safety under calibration bias.
+
+New runs now check modeled h2 and the transformed RD2 barrier before actuation.
+Selection modes initialize with a currently admissible cover for **every** object;
+fixed-four retains its semantics and refuses an invalid start. If no candidate
+covers the supplied shape without violating initial admissibility, startup is
+rejected rather than shrinking margins or silently omitting objects. Target
+guards remain mandatory. Six retained-input checks yield four audited safe
+pickups and two startup refusals. One refusal prediction was wrong: a two-sphere
+cover was admissible where four/eight-sphere choices were not. The original
+prediction and frozen failures are retained. Refusals are not safe pickups,
+hardware safe stops, or proof of true-object coverage.
+
+All 354 frozen study trajectories pass independent native re-evaluation; four
+additional correction trajectories also pass. 101 regression tests pass.
+Warm-filter microbenchmarks retain fixed allocated rows (348 small / 696 rich);
+masking fewer pairs does not demonstrate a runtime speedup or real-time control.
+Jev requests use a background worker, but periodic camera capture/fitting and
+evidence logging are currently synchronous before-control work. They can delay
+a simulation control step; asynchronous sensor isolation and active viewpoint
+planning are not implemented.
+The cumulative ledger has 374 logical provider requests: estimated reported
+token cost $0.366746268 and conservative reservations $3.088318464 under $7.50.
+No new provider calls are needed to inspect the package.
+
+Saved-result commands (no provider calls or new physics):
+
+```bash
+uv run --offline --frozen --cache-dir .uv-cache python -B analyze_pickup.py compare --output artifacts/pickup/selection_development_v1
+uv run --offline --frozen --cache-dir .uv-cache python -B analyze_pickup.py compare --output artifacts/pickup/camera_control_v1
+uv run --offline --frozen --cache-dir .uv-cache python -B pickup_gallery.py review
+uv run --offline --frozen --cache-dir .uv-cache python -B pickup_gallery.py verify
+```
+
+The local portable viewing bundle is `artifacts/pickup/review_bundle.zip` once
+generated. It includes source, saved evidence and playback, not credentials,
+environments or upstream checkouts; physics reruns still need the documented
+sibling repositories. Build a deliberately new local bundle with
+`pickup_gallery.py bundle --output artifacts/pickup/NEW_BUNDLE.zip` under uv with
+`--env-file .env.local` solely for exact credential-exclusion scanning (no API call).
+Unzip it and open `artifacts/pickup/review/index.html`; all browser assets are local.
+
+Reproduce startup diagnostics in a new directory (new physics, no provider calls):
+
+```bash
+uv run --offline --frozen --cache-dir .uv-cache python -B analyze_pickup.py startup --output artifacts/pickup --destination artifacts/pickup/NEW_STARTUP_CHECK
+uv run --offline --frozen --cache-dir .uv-cache python -B analyze_pickup.py startup-report --output artifacts/pickup/NEW_STARTUP_CHECK
+```
+
+`study_pickup.py` coordinates deliberately new studies; `perception.py` contains
+depth backprojection/fitting and the observation-driven runtime; `pickup_layouts.py`
+constructs geometry-qualified challenge fixtures. `prompts/pickup_terminal.json`
+is the common inspectable question template. Enabling `--live` spends from the
+same persistent $7.50 ledger, not a fresh allowance. Generated evidence stays
+ignored/local; a fresh clone does not contain the saved gallery.
+
+### Prior completed package (preserved)
 
 One task family: maneuver through fixed clutter, pick up the designated target,
 then stop. The review links original failures, independent audits, geometry and

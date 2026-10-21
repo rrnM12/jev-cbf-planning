@@ -19,6 +19,33 @@ implementation checklist. Follow the user's latest directions if they differ.
 
 ## Work one checkpoint at a time
 
+- Publication authorization (21 October; D19): Nihar requested pushing the
+  completed D18 checkpoint to the existing Jev repository. Commit/push source,
+  tests, fixtures and documentation only. Keep credentials, environments, caches,
+  generated trajectories/galleries and the 2 GB review bundle local/ignored.
+  Verify tests, staged credential exclusion, upstream cleanliness and remote
+  commit identity. This request does not authorize new experiments/API calls.
+- Active authorization (21 October; D18): Nihar approved autonomous work through
+  selection diagnosis/improvement, comparison with a geometric rule, stronger
+  unseen static-clutter pickup evaluation, simulated wrist/scene RGB/depth
+  geometry estimation, and imperfect-observation/model-failure tests (points 1–5).
+  Also investigate richer sphere counts than 1/2/4. This supersedes the completed
+  package's no-new-experiment stop below. Work evidence-first, keep settings and
+  prompt changes editable, retain failed attempts, and do not manufacture Jev
+  superiority. Keep the existing persistent $7.50 total Jev budget, not a fresh
+  cap. No frontier-provider calls, hardware, moving clutter, upstream edits or
+  new push are included. Source checkpoint `cae821a` is the starting publication.
+  D18 is now complete locally: 354 frozen study trajectories independently
+  audited, four additional startup-correction pickups and two refusals, and
+  101 passing tests. Review `artifacts/pickup/review/index.html` and current
+  PROGRESS.md. Rich covers help; Jev does not beat the geometric rule here.
+  Final packaging checks are offline only. Do not start another automatic
+  experiment/provider call or push without new direction. Preserve all failures.
+- For perception, distinguish simulator segmentation/ground-truth labels used
+  as scaffolding from actual learned detection. Keep physical evaluation truth
+  separate from observation-derived controller geometry; do not silently fill
+  occluded/unseen surfaces with oracle dimensions or claim full-object coverage
+  from visible points. Robot/camera calibration can remain known in simulation.
 - Current task direction (21 October; D14): use one task family only. The arm
   maneuvers through static clutter, picks up the designated target, and stops
   once pickup is verified. Layouts/target positions are variations of that task,

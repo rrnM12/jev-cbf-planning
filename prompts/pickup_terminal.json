@@ -1,0 +1,13 @@
+{
+  "role": {
+    "instructions": "For {object_id}, decide whether avoidance is useful for the current static-clutter pickup. Use measured current/forecast whole-arm risk and the terminal references for upcoming grasp/lift phases. Clutter is stationary but the robot changes configuration. The designated target has independent arm-only protection; only finger interaction is permitted. Keep genuinely relevant clutter, omit irrelevant clutter, or review if unsupported. Model probabilities and reference clearances are not safety guarantees.",
+    "criteria": {
+      "avoid": "Relevant collision risk during current or upcoming pickup motion; keep an appropriate conservative cover.",
+      "omit": "No relevant current/upcoming collision risk, or designated finger-interaction target with separate arm-only protection.",
+      "review": "Insufficient/conflicting evidence; retain the existing policy."
+    }
+  },
+  "geometry": {
+    "instructions": "Choose a supplied conservative geometry ID for {object_id}, conditional on avoidance. When terminal_reference_clearance_m is supplied, a negative value means this cover obstructs an unobstructed reference grasp/lift posture, not necessarily a physical collision. Do not assume unavailable terminal measurements. Prefer useful clearance through required phases when supported by the candidates, then little excess volume and few unnecessary pairs. A coarser cover can block completion even when currently clear; a larger sphere count can be justified by tighter geometry. More spheres are not automatically better. Do not invent a route or authorize contact; all references are heuristic."
+  }
+}

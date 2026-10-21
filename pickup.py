@@ -32,7 +32,8 @@ DEFAULTS = {
 }
 
 
-def pickup_request(scene, settings, robot, template, *, samples=10_000, model="jev-1.13.0", shape_aware=False):
+def pickup_request(scene, settings, robot, template, *, samples=10_000, model="jev-1.13.0", shape_aware=False,
+                   counts=(1,2,4), terminal_features=False):
     q = np.asarray(robot.default_configuration)
     objects = deepcopy(scene["objects"])
     target = scene["target_id"]
@@ -52,7 +53,11 @@ def pickup_request(scene, settings, robot, template, *, samples=10_000, model="j
     context = robot_context(robot, {"qpos": q[None], "qvel": np.zeros((1, 7))})
     context["limitations"] = "Original 21 arm/tool collision spheres; articulated fingers and contact/payload forces are not states in the seven-DOF FRAX dynamics. Independent native evaluation includes the actual fingers. No formal contact-phase safety guarantee."
     context["scene_pairing"] = "Clutter pairs with all original 21 spheres. The explicitly designated pickup target always protects the 16 upstream arm spheres; only the five terminal tool spheres are exempt for intended grasping. Native evaluation still rejects palm/arm-target contact."
-    request = prepare_request(facts, template, model=model, samples=samples, robot_context=context, shape_aware=shape_aware)
+    if 4 not in counts:
+        raise ValueError("pickup candidate counts must include the fixed four-sphere arm-target cover")
+    request = prepare_request(facts, template, model=model, samples=samples, robot_context=context, shape_aware=shape_aware, counts=counts)
+    if terminal_features:
+        request["state"]["terminal_clearance_features"] = True
     request["state"].update(target_id=target, phase="approach", pickup_settings=deepcopy(settings))
     for supplied, original in zip(request["state"]["objects"], objects, strict=True):
         supplied["description"] = original.get("description", "")
@@ -165,7 +170,7 @@ class PickupRuntime(ConstraintRuntime):
     """Task hooks layered over the existing selection worker and CBF adapters."""
 
     def __init__(self, scene, settings, request, initial, mode, output, *, live=False):
-        super().__init__(scene, settings, request, initial, np.zeros(7), "all" if mode in ("rule", "geometry") else mode, output, live=live)
+        super().__init__(scene, settings, request, initial, np.zeros(7), "all" if mode in ("rule", "geometry", "all_fine") else mode, output, live=live)
         self.mode = mode
         self.target_id = scene["target_id"]
         self.target = next(o for o in scene["objects"] if o["id"] == self.target_id)
@@ -174,6 +179,8 @@ class PickupRuntime(ConstraintRuntime):
         self.bottom_trace = []
         self.verified_since = None
         self.next_rule_at = 0.
+        self.startup_checked = False
+        self.startup_trials = []
         # The task contract, not model authority, controls intended contact.
         self.policy[self.target_id] = None if mode == "off" else "box-split-4"
 
@@ -186,7 +193,7 @@ class PickupRuntime(ConstraintRuntime):
 
     def scene_spec(self, mj, frax_dir, state, centers, radii):
         clutter = deepcopy(state)
-        clutter["objects"] = [o for o in state["objects"] if o["id"] != self.target_id]
+        clutter["objects"] = [o for o in self.scene["objects"] if o["id"] != self.target_id]
         spec = scene_spec(mj, frax_dir, clutter, centers, radii)
         spec.option.integrator = mj.mjtIntegrator.mjINT_IMPLICITFAST
         # The upstream plane is the support surface; the base is mounted on it.
@@ -241,7 +248,7 @@ class PickupRuntime(ConstraintRuntime):
         args = list(super().parameters(at, policy))
         enabled = np.broadcast_to(args[3], (getattr(self, "robot_sphere_count", 29), self.capacity)).copy()
         index = [o["id"] for o in self.base["state"]["objects"]].index(self.target_id)
-        slots = slice(index*4, index*4+4)
+        slots = slice(index*self.object_capacity, index*self.object_capacity+4)
         candidate = next(c for c in self.base["state"]["objects"][index]["candidates"] if c["id"] == "box-split-4")
         rotation = self.env.data.xmat[self.target_body_id].reshape(3, 3)
         offsets = np.asarray(candidate["centers_object_m"]) @ rotation.T
@@ -264,7 +271,67 @@ class PickupRuntime(ConstraintRuntime):
         self.events[-1]["policy"] = self.policy.copy()
         self.events[-1]["target_contact_policy"] = "Task-designated target: arm-only barriers throughout pickup; intended tool contact monitored natively. Jev cannot grant contact with other objects."
 
+    def admissible_cover_policy(self, q, v, at):
+        """All-object initialization, not semantic selection or route planning.
+
+        Constraints separate by obstacle, so check each candidate with mandatory
+        target/intrinsic protections, then admit the combined set. Every candidate
+        covers its supplied shape; perception does not guarantee the true shape.
+        """
+        policy = dict.fromkeys(self.policy)
+        policy[self.target_id] = "box-split-4"
+        z = np.r_[q, v, at]
+        trials = []
+        self.startup_trials = trials
+        for obj in self.base['state']['objects']:
+            if obj['id'] == self.target_id:
+                continue
+            candidates = sorted(obj['candidates'], key=lambda c: (c['excess_volume_m3'], c['primitive_count'], c['id']))
+            chosen = None
+            for candidate in candidates:
+                single = dict.fromkeys(policy)
+                single[self.target_id], single[obj['id']] = "box-split-4", candidate['id']
+                args = self.parameters(at, single)
+                h2, h1 = np.asarray(self.h2_fn(z, *args)), np.asarray(self.h1_fn(z, *args))
+                finite = bool(np.isfinite(h2).all() and np.isfinite(h1).all())
+                valid = finite and h2.min() >= 0 and h1.min() >= 0
+                trials.append(dict(object_id=obj['id'], candidate_id=candidate['id'], admissible=bool(valid),
+                                   minimum_h2=float(h2.min()) if finite else None,
+                                   minimum_h1=float(h1.min()) if finite else None))
+                if valid:
+                    chosen = candidate['id']
+                    break
+            if chosen is None:
+                raise ValueError(f"no currently RD2-admissible full-shape candidate for {obj['id']}")
+            policy[obj['id']] = chosen
+        return policy, trials
+
+    def check_startup(self, q, v, at):
+        """Reject unsupported initial models before executing any arm control."""
+        event = dict(at_s=float(at), mode=self.mode,
+                     scope='Initial modeled h2 and transformed h1 check, not a feasibility, perception-coverage or hardware safe-stop certificate.')
+        try:
+            if self.mode in ('off', 'all'):
+                policy, trials = self.policy.copy(), []  # Preserve fixed-four baseline semantics.
+            else:
+                policy, trials = self.admissible_cover_policy(q, v, at)
+            event.update(self.admit(policy, q, v, at), candidate_checks=trials)
+            self.startup_checked = True
+        except ValueError as error:
+            event.update(status='rejected_before_actuation', error=str(error), policy=self.policy.copy(),
+                         candidate_checks=self.startup_trials)
+            save(self.output/'startup.json', event)
+            raise ValueError('pickup startup rejected before actuation; see startup.json') from error
+        save(self.output/'startup.json', event)
+
+    def close(self):
+        """Release a selector worker on an aborted run, without substitute control."""
+        if self.executor is not None:
+            self.executor.shutdown(wait=True, cancel_futures=True)
+
     def before_control(self, env):
+        if not self.startup_checked:
+            self.check_startup(env.data.qpos[:7], env.data.qvel[:7], float(env.data.time))
         super().before_control(env)
         at = float(env.data.time)
         if self.mode == "geometry" and not self.initialized_selection:
@@ -272,7 +339,7 @@ class PickupRuntime(ConstraintRuntime):
                      "note":"All objects retained; only recorded conditional geometry is used. This isolates geometry from role selection."}
             try:
                 proposals = validate_selection(self.initial_report)
-                if self.initial_report["request"]["state"] != self.base["state"]:
+                if not self.geometry_context_matches(self.initial_report):
                     raise ValueError("geometry report context differs from the frozen scene")
                 policy = {p["object_id"]:p["conditional_candidate_id"] for p in proposals}
                 policy[self.target_id] = "box-split-4"
@@ -282,7 +349,7 @@ class PickupRuntime(ConstraintRuntime):
             self.events.append(event)
             save(self.output/"events.json",self.events)
             self.initialized_selection = True
-        if self.mode != "rule" or at+1e-9 < self.next_rule_at:
+        if self.mode not in ("rule","all_fine") or at+1e-9 < self.next_rule_at:
             return
         request = self.make_request(env.data.qpos[:7], env.data.qvel[:7], at)
         policy = {}
@@ -292,9 +359,9 @@ class PickupRuntime(ConstraintRuntime):
             # least global excess-volume candidate, then the smaller count.
             best = min(obj["candidates"], key=lambda c: (c["excess_volume_m3"], c["primitive_count"], c["id"]))
             risk = min(c["forecast_robot_sphere_clearance_m"] for c in obj["candidates"]) <= 0
-            policy[obj["id"]] = best["id"] if risk else None
+            policy[obj["id"]] = best["id"] if risk or self.mode=="all_fine" else None
         policy[self.target_id] = "box-split-4"
-        event = {"kind": "selection", "source": "deterministic geometry rule; no model response",
+        event = {"kind": "selection", "source": "deterministic geometry rule; no model response" if self.mode=="rule" else "all objects / least-excess geometry; no model response",
                  "applied_at_s": at, "snapshot_at_s": at}
         try:
             event.update(self.admit(policy, env.data.qpos[:7], env.data.qvel[:7], at))
@@ -303,6 +370,9 @@ class PickupRuntime(ConstraintRuntime):
         self.events.append(event)
         save(self.output/"events.json", self.events)
         self.next_rule_at += self.settings["query_period_s"]
+
+    def geometry_context_matches(self,report):
+        return report['request']['state']==self.base['state']
 
     def waypoint(self):
         goal = np.array([*self.initial_target_center[:2], self.settings["grasp_height_m"]])
@@ -408,6 +478,8 @@ class PickupRuntime(ConstraintRuntime):
             result["selection_source"] = "deterministic geometric forecast/excess-volume baseline; no API or fabricated model answers"
         elif self.mode == "geometry":
             result["selection_source"] = "all-object baseline with recorded conditional Jev geometry; role decisions ignored; shared initial answer, no additional model call"
+        elif self.mode == "all_fine":
+            result['selection_source']='all clutter retained with least estimated excess-volume candidate; no API or fabricated model answer'
         result["task_success"] = bool(result["complete"] and self.task_done and not result["collision"]["any_sampled_scene_violation"] and not result["any_sampled_negative_h2"])
         trajectory.update(target_center_m=np.asarray(self.target_trace), phase=np.asarray(self.phase_trace),
                           tool_centers_ee_m=self.tool_spheres[0], tool_radii_m=self.tool_spheres[1],
@@ -445,6 +517,18 @@ class PickupRuntime(ConstraintRuntime):
             "kind": "Heuristic sampled joint interpolation toward this phase's unobstructed nominal reference; not an obstacle-aware plan, actual policy rollout, or safety guarantee.",
             "samples": 16, "joint_goal_rad": qgoal.tolist(),
         }
+        terminal = {}
+        if request["state"].get("terminal_clearance_features"):
+            phases = ("pregrasp","descend","close","lift")
+            for phase in phases:
+                if phase in reference:
+                    state_q = np.asarray(reference[phase])[None]
+                    terminal[phase] = np.concatenate([np.asarray(self.sphere_predict(state_q)),
+                                                      np.asarray(self.tool_predict(state_q))],axis=1)[0]
+            request["state"]["motion"]["terminal_clearance_scope"] = (
+                "Per-candidate clearance at independently recorded unobstructed pregrasp/grasp/lift joint references. "
+                "Negative means this COVER blocks that reference posture, not that the physical object collides "
+                "or that no alternate posture/route exists. All finger-travel envelopes included for clutter.")
         for obj, position in zip(request["state"]["objects"], self.positions(), strict=True):
             obj["center_m"] = position.tolist()
             for candidate in obj["candidates"]:
@@ -456,5 +540,10 @@ class PickupRuntime(ConstraintRuntime):
                 candidate.update(current_robot_sphere_clearance_m=float(distances[0].min()),
                                  forecast_robot_sphere_clearance_m=float(distances.min()),
                                  robot_primitive_constraint_pairs=int(len(robot_radii)*len(centers)))
+                if terminal and obj["id"] != self.target_id:
+                    candidate["terminal_reference_clearance_m"] = {
+                        phase:float((np.linalg.norm(points[:,None]-centers[None],axis=-1)
+                                     -robot_radii[:,None]-np.asarray(candidate["radii_m"])[None]).min())
+                        for phase,points in terminal.items()}
                 request["questions"][f"geometry/{obj['id']}"]["criteria"][candidate["id"]] = deepcopy(candidate)
         return json.loads(json.dumps(request, allow_nan=False))

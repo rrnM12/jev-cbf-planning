@@ -5,6 +5,7 @@ from pathlib import Path
 import tempfile
 from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 
 import numpy as np
 
@@ -144,6 +145,74 @@ class PickupTests(unittest.TestCase):
             runtime.phase="close";runtime.phase_began=0;data.time=2.
             runtime.after_step(env)
             self.assertEqual(runtime.phase,"close")
+
+    def test_eight_slot_runtime_and_terminal_features_use_real_robot_geometry(self):
+        scene=deepcopy(read(ROOT/"examples/pickup_scenes.json")["scenes"][0])
+        request=pickup_request(scene,DEFAULTS,self.robot,read(ROOT/"prompts/pickup_terminal.json"),
+                               counts=(1,2,3,4,5,6,8),shape_aware=True,terminal_features=True,samples=1000)
+        request["state"]["motion"]["phase_joint_reference_rad"]={"descend":np.asarray(self.robot.default_configuration).tolist()}
+        with tempfile.TemporaryDirectory() as tmp:
+            runtime=PickupRuntime(scene,DEFAULTS,request,None,"all_fine",Path(tmp))
+            result,_=run_case(self.demo,self.utils,{"request":request},"off",frax_dir=ROOT.parent/"frax",steps=2,runtime=runtime,scene_guard=.05)
+            self.assertIn('no API',result['selection_source'])
+            self.assertEqual(runtime.object_capacity,8)
+            self.assertEqual(result["allocated_scene_pair_count"],29*24)
+            policy={o["id"]:"box-split-8" for o in scene["objects"]}
+            policy[scene["target_id"]]="box-split-4"
+            params=runtime.parameters(0.,policy)
+            self.assertEqual(int(params[3].sum()),64+29*16)
+            updated=runtime.make_request(np.asarray(self.robot.default_configuration),np.zeros(7),0.)
+            for obj in updated["state"]["objects"]:
+                if obj["id"]==scene["target_id"]:continue
+                for candidate in obj["candidates"]:
+                    self.assertAlmostEqual(candidate["terminal_reference_clearance_m"]["descend"],candidate["current_robot_sphere_clearance_m"])
+                    self.assertEqual(updated["questions"]["geometry/"+obj["id"]]["criteria"][candidate["id"]],candidate)
+
+    def test_startup_selects_admissible_all_object_cover_and_keeps_target_guards(self):
+        scene=deepcopy(read(ROOT/'examples/pickup_challenge_scenes.json')['scenes'][0])
+        request=pickup_request(scene,DEFAULTS,self.robot,read(ROOT/'prompts/pickup_terminal.json'),
+                               counts=(1,2,3,4,5,6,8),shape_aware=True,samples=1000)
+        with tempfile.TemporaryDirectory() as tmp:
+            # Explicit offline failure tests fallback, not a fabricated Jev answer.
+            runtime=PickupRuntime(scene,DEFAULTS,request,{'error':'OFFLINE simulated unavailable response'},'once',Path(tmp))
+            result,trace=run_case(self.demo,self.utils,{'request':request},'off',frax_dir=ROOT.parent/'frax',
+                                  steps=2,runtime=runtime,scene_guard=.05)
+            startup=read(Path(tmp)/'startup.json')
+            self.assertEqual(startup['status'],'accepted')
+            self.assertTrue(all(startup['policy'].values()))
+            self.assertNotEqual(startup['policy']['bottle_a'],'box-split-4')
+            self.assertGreaterEqual(trace['scene_h2_m'].min(),0.)
+            self.assertTrue(trace['cover_enabled'][:,:16,:4].all())
+            self.assertTrue(result['complete'])
+
+    def test_unsupported_startup_is_recorded_before_any_actuation(self):
+        scene=deepcopy(read(ROOT/'examples/pickup_scenes.json')['scenes'][0])
+        request=pickup_request(scene,DEFAULTS,self.robot,read(ROOT/'prompts/pickup_terminal.json'),samples=1000)
+        for obj in request['state']['objects']:
+            if obj['id']==scene['target_id']:continue
+            for candidate in obj['candidates']:candidate['radii_m']=[1000.]*len(candidate['radii_m'])
+        with tempfile.TemporaryDirectory() as tmp:
+            runtime=PickupRuntime(scene,DEFAULTS,request,None,'rule',Path(tmp))
+            with patch.object(self.demo.ManipulatorEnv,'apply_control') as apply:
+                with self.assertRaisesRegex(RuntimeError,'no controls executed.*startup rejected'):
+                    run_case(self.demo,self.utils,{'request':request},'off',frax_dir=ROOT.parent/'frax',
+                             steps=2,runtime=runtime,scene_guard=.05)
+                apply.assert_not_called()
+            startup=read(Path(tmp)/'startup.json')
+            self.assertEqual(startup['status'],'rejected_before_actuation')
+            self.assertFalse(runtime.startup_checked)
+            self.assertTrue(startup['candidate_checks'])
+            self.assertFalse(any(c['admissible'] for c in startup['candidate_checks']))
+
+    def test_fixed_four_baseline_does_not_silently_change_representation(self):
+        scene=deepcopy(read(ROOT/'examples/pickup_challenge_scenes.json')['scenes'][0])
+        request=pickup_request(scene,DEFAULTS,self.robot,read(ROOT/'prompts/pickup_terminal.json'),samples=1000)
+        with tempfile.TemporaryDirectory() as tmp:
+            runtime=PickupRuntime(scene,DEFAULTS,request,None,'all',Path(tmp))
+            with self.assertRaisesRegex(RuntimeError,'no controls executed.*startup rejected'):
+                run_case(self.demo,self.utils,{'request':request},'off',frax_dir=ROOT.parent/'frax',
+                         steps=2,runtime=runtime,scene_guard=.05)
+            self.assertTrue(all(v=='box-split-4' for v in runtime.policy.values()))
 
 
 if __name__ == "__main__":

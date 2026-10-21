@@ -8,7 +8,7 @@ import unittest
 import numpy as np
 
 from inspect_selection import ROOT, prepare_request
-from online import ConstraintRuntime, motion_request, object_motion, query_saved
+from online import ConstraintRuntime, motion_request, object_motion, query_saved, FaultInjectedJev
 from robot_selection import robot_context, scene_input
 from run_static import load_upstream, run_case
 from run_suite import read
@@ -24,6 +24,19 @@ def fabricated(request, roles=None):
 
 
 class OnlineTests(unittest.TestCase):
+    def test_injected_unavailable_calls_are_not_sent_or_charged(self):
+        called=[]
+        with tempfile.TemporaryDirectory() as tmp:
+            adapter=FaultInjectedJev(lambda request:called.append(request) or {'model':'FABRICATED OFFLINE TEST'},
+                                     {'fail_calls':[2,3]},Path(tmp))
+            request={'state':{}}
+            adapter(request)
+            for _ in range(2):
+                with self.assertRaisesRegex(ValueError,'INJECTED'):adapter(request)
+            adapter(request)
+            self.assertEqual(len(called),2)
+            self.assertEqual([e['logical_call'] for e in read(Path(tmp)/'model_fault_events.json')],[1,2,3,4])
+
     @classmethod
     def setUpClass(cls):
         cls.demo, cls.utils = load_upstream(ROOT.parent/"frax", ROOT.parent/"cbfpy")

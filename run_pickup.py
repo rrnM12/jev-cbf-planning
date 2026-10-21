@@ -17,14 +17,21 @@ import numpy as np
 
 from api_budget import JevBudget
 from inspect_selection import ROOT
-from online import query_saved
+from online import query_saved,FaultInjectedJev
 from pickup import DEFAULTS, PickupRuntime, pickup_request
 from run_static import load_upstream, run_case
 from run_suite import check_manifest, digest, read, save
 
 
-SOURCES = ("pickup.py", "run_pickup.py", "run_static.py", "runtime_cbf.py", "sim_model.py", "online.py", "inspect_selection.py", "api_budget.py", "geometry.py", "robot_selection.py")
+SOURCES = ("pickup.py", "run_pickup.py", "run_static.py", "runtime_cbf.py", "sim_model.py", "online.py", "inspect_selection.py", "api_budget.py", "geometry.py", "robot_selection.py", "study_pickup.py", "perception.py", "pickup_layouts.py")
 BUDGET_PATH = ROOT/"artifacts/usage/pickup_research_v1.json"
+
+
+def runtime_type(scene):
+    if 'observation_config' in scene:
+        from perception import PerceivedPickupRuntime
+        return PerceivedPickupRuntime
+    return PickupRuntime
 
 
 def runtime_versions():
@@ -46,13 +53,19 @@ def execute(folder, scene, settings, request, mode, demo, utils, *, initial=None
     if (output/"attempt.json").exists():
         raise ValueError(f"interrupted rollout retained: {output}; choose a new run directory")
     save(output/"attempt.json", {"status": "started", "mode": mode})
-    runtime = PickupRuntime(scene, settings, request, initial, mode, output, live=live)
+    runtime = runtime_type(scene)(scene, settings, request, initial, mode, output, live=live)
     if budget is not None:
         runtime.query_options = {"ask": budget}
-    result, trajectory = run_case(demo, utils, {"request": request}, "off", frax_dir=ROOT.parent/"frax",
-                                  steps=round(settings["duration_s"]/settings["control_dt_s"]),
-                                  model_profile="frax_gripper", scene_guard=settings["scene_guard_m_s2"],
-                                  control_dt=settings["control_dt_s"], runtime=runtime)
+    try:
+        result, trajectory = run_case(demo, utils, {"request": request}, "off", frax_dir=ROOT.parent/"frax",
+                                      steps=round(settings["duration_s"]/settings["control_dt_s"]),
+                                      model_profile="frax_gripper", scene_guard=settings["scene_guard_m_s2"],
+                                      control_dt=settings["control_dt_s"], runtime=runtime)
+    except (ValueError, RuntimeError):
+        startup=read(output/'startup.json') if (output/'startup.json').exists() else {}
+        save(output/'attempt.json',dict(status=startup.get('status','failed'),mode=mode,
+                                        note='No successful result fabricated; inspect retained startup/diagnostic files and use a new run directory.'))
+        raise
     np.savez_compressed(output/"trajectory.npz", **trajectory)
     result["trajectory_sha256"] = digest(output/"trajectory.npz")
     save(output/"result.json", result)
@@ -67,7 +80,14 @@ def prepare(folder, scenes_path, template_path):
     if folder.exists() and any(folder.iterdir()):
         raise ValueError("prepare requires a new/empty output directory")
     config, template = read(scenes_path), read(template_path)
+    if config.get('observation') is not None:
+        for scene in config['scenes']:scene['observation_config']=deepcopy(config['observation'])
+    if config.get('model_faults') is not None:
+        for scene in config['scenes']:scene['model_faults']=deepcopy(config['model_faults'])
     settings = dict(DEFAULTS, **config.get("settings", {}))
+    geometry_options = dict(shape_aware=config.get("shape_aware_geometry",False),
+                            counts=tuple(config.get("geometry_counts",(1,2,4))),
+                            terminal_features=config.get("terminal_clearance_features",False))
     if set(settings) != set(DEFAULTS) or any(not np.isfinite(v) or v <= 0 for v in settings.values()):
         raise ValueError("settings must use known names and finite positive values")
     ids = [s["id"] for s in config["scenes"]]
@@ -88,8 +108,9 @@ def prepare(folder, scenes_path, template_path):
         # No clutter forces/barriers in this reference. Real finger/target
         # physics remain; it is labeled a prediction, not the evaluated off run.
         unobstructed = deepcopy(scene)
+        unobstructed.pop('observation_config',None)
         unobstructed["objects"] = [o for o in scene["objects"] if o["id"] == scene["target_id"]]
-        seed = pickup_request(unobstructed, settings, robot, template, shape_aware=config.get("shape_aware_geometry", False))
+        seed = pickup_request(unobstructed, settings, robot, template, **geometry_options)
         execute(case/"nominal_reference", unobstructed, settings, seed, "off", demo, utils)
         nominal_result = read(case/"nominal_reference/off/result.json")
         with np.load(case/"nominal_reference/off/trajectory.npz") as trace:
@@ -101,11 +122,16 @@ def prepare(folder, scenes_path, template_path):
                 references[phase] = trace["qpos"][indices[-1], :7].tolist()
         if not nominal_result["grasp_verified"]:
             raise ValueError(f"{scene['id']}: unobstructed physical pickup failed; no model calls")
-        base = pickup_request(scene, settings, robot, template, shape_aware=config.get("shape_aware_geometry", False))
+        observed_scene=scene
+        if 'observation_config' in scene:
+            from perception import observe_initial
+            observed_scene=observe_initial(scene,settings,robot,template,geometry_options,case/'initial_camera',scene['observation_config'])
+        base = pickup_request(observed_scene, settings, robot, template, **geometry_options)
+        if 'observation_config' in scene:base['state']['geometry_counts']=list(geometry_options['counts'])
         base["state"]["motion"]["phase_joint_reference_rad"] = references
         base["state"]["motion"]["reference_source"] = "Recorded original-controller pickup with clutter absent, same target and native finger/target physics. Reference is not a clutter-safe trajectory."
         # Measure the actual initial state in an independent native model.
-        runtime = PickupRuntime(scene, settings, base, None, "all", case/"qualification")
+        runtime = runtime_type(scene)(scene, settings, base, None, "all", case/"qualification")
         spec = runtime.scene_spec(mj, ROOT.parent/"frax", base["state"], [], [])
         spec.attach(runtime.robot_spec(mj, ROOT.parent/"frax"), prefix="", frame=spec.worldbody.add_frame())
         model = spec.compile(); data = mj.MjData(model)
@@ -114,6 +140,7 @@ def prepare(folder, scenes_path, template_path):
         runtime.initialize(env)
         runtime.robot, runtime.sphere_predict = robot, demo.jax.jit(demo.jax.vmap(robot.link_collision_positions))
         request = runtime.make_request(np.asarray(robot.default_configuration), np.zeros(7), 0.)
+        if hasattr(runtime,'sensor'):runtime.sensor.close()
         save(case/"initial/request.json", request)
         save(case/"scene.json", scene)
         frozen += [f"{scene['id']}/initial/request.json", f"{scene['id']}/scene.json"]
@@ -126,8 +153,8 @@ def prepare(folder, scenes_path, template_path):
         "upstream_revisions": {name: subprocess.check_output(["git", "-C", str(ROOT.parent/name), "rev-parse", "HEAD"], text=True).strip() for name in ("frax", "oscbf", "cbfpy")},
         "versions": runtime_versions(),
         "budget_ledger": str(BUDGET_PATH), "budget_cap_usd": "7.50",
-        "baseline_modes": ["off", "all", "rule"], "model_modes": ["geometry", "once", "repeated"],
-        "notes": "Frozen before new model answers. Native articulated gripper + free target; seven-DOF FRAX contact dynamics remain approximate. No hardware/perception or independently moving obstacles.",
+        "baseline_modes": config.get('baseline_modes',["off", "all", "rule"]), "model_modes": config.get('model_modes',["geometry", "once", "repeated"]),
+        "notes": "Frozen before new model answers. Native articulated gripper + free target; seven-DOF FRAX contact dynamics remain approximate. Optional depth-derived clutter uses oracle instance labels and known target. No hardware or independently moving obstacles.",
     })
 
 
@@ -153,9 +180,10 @@ def run(folder, *, live=False, baselines=False):
                 raise ValueError("once/repeated comparison requires --live; gallery/status/replay make no requests")
             # Physics source edits after preparation need an explicitly new run;
             # changing only gallery code does not invalidate saved decisions.
-            initial = query_saved(case/"initial", request, ask=budget)
+            ask=FaultInjectedJev(budget,scene['model_faults'],case) if scene.get('model_faults') else budget
+            initial = query_saved(case/"initial", request, ask=ask)
             for mode in modes:
-                execute(case, scene, settings, request, mode, demo, utils, initial=initial, live=mode == "repeated", budget=budget)
+                execute(case, scene, settings, request, mode, demo, utils, initial=initial, live=mode == "repeated", budget=ask)
 
 
 def reuse_baselines(folder, source):
@@ -173,7 +201,7 @@ def reuse_baselines(folder, source):
     for case in current["scene_ids"]:
         if read(folder/case/"initial/request.json")["state"] != read(source/case/"initial/request.json")["state"]:
             raise ValueError("baseline scene/geometry/motion context differs")
-        for mode in ("off", "all", "rule"):
+        for mode in current.get('baseline_modes',("off","all","rule")):
             origin, destination = source/case/mode, folder/case/mode
             if destination.exists():
                 raise ValueError("destination already contains baseline data")

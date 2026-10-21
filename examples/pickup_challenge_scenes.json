@@ -1,0 +1,628 @@
+{
+  "settings": {},
+  "shape_aware_geometry": true,
+  "geometry_counts": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    8
+  ],
+  "terminal_clearance_features": true,
+  "scenes": [
+    {
+      "id": "unseen_00",
+      "target_id": "target_object",
+      "objects": [
+        {
+          "id": "target_object",
+          "shape": "cylinder",
+          "size_m": [
+            0.044,
+            0.044,
+            0.12
+          ],
+          "center_m": [
+            0.5420386466723482,
+            0.1103711260370384,
+            0.06
+          ],
+          "mass_kg": 0.05
+        },
+        {
+          "id": "bottle_a",
+          "shape": "cylinder",
+          "size_m": [
+            0.08,
+            0.08,
+            0.4
+          ],
+          "center_m": [
+            0.48295283813298795,
+            -0.060105936154855336,
+            0.2
+          ],
+          "description": "Stationary tabletop clutter."
+        },
+        {
+          "id": "box_b",
+          "shape": "box",
+          "size_m": [
+            0.08,
+            0.08,
+            0.08
+          ],
+          "center_m": [
+            0.66,
+            -0.28,
+            0.04
+          ],
+          "description": "Stationary tabletop clutter."
+        }
+      ]
+    },
+    {
+      "id": "unseen_01",
+      "target_id": "target_object",
+      "objects": [
+        {
+          "id": "target_object",
+          "shape": "cylinder",
+          "size_m": [
+            0.044,
+            0.044,
+            0.12
+          ],
+          "center_m": [
+            0.49444752778025297,
+            0.09049929572720113,
+            0.06
+          ],
+          "mass_kg": 0.05
+        },
+        {
+          "id": "bottle_a",
+          "shape": "cylinder",
+          "size_m": [
+            0.06,
+            0.06,
+            0.4
+          ],
+          "center_m": [
+            0.4747178517330257,
+            -0.08222394000970144,
+            0.2
+          ],
+          "description": "Stationary tabletop clutter."
+        },
+        {
+          "id": "box_b",
+          "shape": "box",
+          "size_m": [
+            0.08,
+            0.08,
+            0.08
+          ],
+          "center_m": [
+            0.66,
+            -0.28,
+            0.04
+          ],
+          "description": "Stationary tabletop clutter."
+        }
+      ]
+    },
+    {
+      "id": "unseen_02",
+      "target_id": "target_object",
+      "objects": [
+        {
+          "id": "target_object",
+          "shape": "cylinder",
+          "size_m": [
+            0.044,
+            0.044,
+            0.12
+          ],
+          "center_m": [
+            0.5109142484484765,
+            0.0756535839557318,
+            0.06
+          ],
+          "mass_kg": 0.05
+        },
+        {
+          "id": "bottle_a",
+          "shape": "cylinder",
+          "size_m": [
+            0.08,
+            0.08,
+            0.4
+          ],
+          "center_m": [
+            0.4768273300954267,
+            -0.08995424794697612,
+            0.2
+          ],
+          "description": "Stationary tabletop clutter."
+        },
+        {
+          "id": "box_b",
+          "shape": "box",
+          "size_m": [
+            0.08,
+            0.08,
+            0.08
+          ],
+          "center_m": [
+            0.66,
+            -0.28,
+            0.04
+          ],
+          "description": "Stationary tabletop clutter."
+        }
+      ]
+    },
+    {
+      "id": "unseen_03",
+      "target_id": "target_object",
+      "objects": [
+        {
+          "id": "target_object",
+          "shape": "cylinder",
+          "size_m": [
+            0.044,
+            0.044,
+            0.12
+          ],
+          "center_m": [
+            0.5016864490201873,
+            0.13957961733746366,
+            0.06
+          ],
+          "mass_kg": 0.05
+        },
+        {
+          "id": "bottle_a",
+          "shape": "cylinder",
+          "size_m": [
+            0.03,
+            0.03,
+            0.4
+          ],
+          "center_m": [
+            0.5792737155066772,
+            0.24958892127848212,
+            0.2
+          ],
+          "description": "Stationary tabletop clutter."
+        },
+        {
+          "id": "box_b",
+          "shape": "box",
+          "size_m": [
+            0.08,
+            0.08,
+            0.08
+          ],
+          "center_m": [
+            0.66,
+            -0.28,
+            0.04
+          ],
+          "description": "Stationary tabletop clutter."
+        }
+      ]
+    },
+    {
+      "id": "unseen_04",
+      "target_id": "target_object",
+      "objects": [
+        {
+          "id": "target_object",
+          "shape": "cylinder",
+          "size_m": [
+            0.044,
+            0.044,
+            0.12
+          ],
+          "center_m": [
+            0.5491611753709832,
+            0.08784453450673146,
+            0.06
+          ],
+          "mass_kg": 0.05
+        },
+        {
+          "id": "bottle_a",
+          "shape": "cylinder",
+          "size_m": [
+            0.03,
+            0.03,
+            0.4
+          ],
+          "center_m": [
+            0.5135912612486654,
+            0.23655101858067995,
+            0.2
+          ],
+          "description": "Stationary tabletop clutter."
+        },
+        {
+          "id": "box_b",
+          "shape": "box",
+          "size_m": [
+            0.08,
+            0.08,
+            0.08
+          ],
+          "center_m": [
+            0.66,
+            -0.28,
+            0.04
+          ],
+          "description": "Stationary tabletop clutter."
+        }
+      ]
+    },
+    {
+      "id": "unseen_05",
+      "target_id": "target_object",
+      "objects": [
+        {
+          "id": "target_object",
+          "shape": "cylinder",
+          "size_m": [
+            0.044,
+            0.044,
+            0.12
+          ],
+          "center_m": [
+            0.5062490417076296,
+            -0.08944588782497737,
+            0.06
+          ],
+          "mass_kg": 0.05
+        },
+        {
+          "id": "bottle_a",
+          "shape": "cylinder",
+          "size_m": [
+            0.03,
+            0.03,
+            0.4
+          ],
+          "center_m": [
+            0.3305333944184025,
+            -0.04233966004761135,
+            0.2
+          ],
+          "description": "Stationary tabletop clutter."
+        },
+        {
+          "id": "box_b",
+          "shape": "box",
+          "size_m": [
+            0.08,
+            0.08,
+            0.08
+          ],
+          "center_m": [
+            0.66,
+            0.28,
+            0.04
+          ],
+          "description": "Stationary tabletop clutter."
+        }
+      ]
+    },
+    {
+      "id": "unseen_06",
+      "target_id": "target_object",
+      "objects": [
+        {
+          "id": "target_object",
+          "shape": "cylinder",
+          "size_m": [
+            0.044,
+            0.044,
+            0.12
+          ],
+          "center_m": [
+            0.5665208188764704,
+            0.056547833216281616,
+            0.06
+          ],
+          "mass_kg": 0.05
+        },
+        {
+          "id": "bottle_a",
+          "shape": "cylinder",
+          "size_m": [
+            0.03,
+            0.03,
+            0.4
+          ],
+          "center_m": [
+            0.5966219449529535,
+            0.20158951320830273,
+            0.2
+          ],
+          "description": "Stationary tabletop clutter."
+        },
+        {
+          "id": "box_b",
+          "shape": "box",
+          "size_m": [
+            0.08,
+            0.08,
+            0.08
+          ],
+          "center_m": [
+            0.66,
+            -0.28,
+            0.04
+          ],
+          "description": "Stationary tabletop clutter."
+        }
+      ]
+    },
+    {
+      "id": "unseen_07",
+      "target_id": "target_object",
+      "objects": [
+        {
+          "id": "target_object",
+          "shape": "cylinder",
+          "size_m": [
+            0.044,
+            0.044,
+            0.12
+          ],
+          "center_m": [
+            0.5334005044911782,
+            -0.049744100203931246,
+            0.06
+          ],
+          "mass_kg": 0.05
+        },
+        {
+          "id": "bottle_a",
+          "shape": "cylinder",
+          "size_m": [
+            0.044,
+            0.044,
+            0.4
+          ],
+          "center_m": [
+            0.606692468322242,
+            0.07080267876177697,
+            0.2
+          ],
+          "description": "Stationary tabletop clutter."
+        },
+        {
+          "id": "box_b",
+          "shape": "box",
+          "size_m": [
+            0.08,
+            0.08,
+            0.08
+          ],
+          "center_m": [
+            0.66,
+            0.28,
+            0.04
+          ],
+          "description": "Stationary tabletop clutter."
+        }
+      ]
+    },
+    {
+      "id": "unseen_08",
+      "target_id": "target_object",
+      "objects": [
+        {
+          "id": "target_object",
+          "shape": "cylinder",
+          "size_m": [
+            0.044,
+            0.044,
+            0.12
+          ],
+          "center_m": [
+            0.47503764920923086,
+            0.0022476865603781927,
+            0.06
+          ],
+          "mass_kg": 0.05
+        },
+        {
+          "id": "bottle_a",
+          "shape": "cylinder",
+          "size_m": [
+            0.03,
+            0.03,
+            0.24
+          ],
+          "center_m": [
+            0.473382238719653,
+            -0.1433124955665583,
+            0.12
+          ],
+          "description": "Stationary tabletop clutter."
+        },
+        {
+          "id": "box_b",
+          "shape": "box",
+          "size_m": [
+            0.08,
+            0.08,
+            0.08
+          ],
+          "center_m": [
+            0.66,
+            -0.28,
+            0.04
+          ],
+          "description": "Stationary tabletop clutter."
+        }
+      ]
+    },
+    {
+      "id": "unseen_09",
+      "target_id": "target_object",
+      "objects": [
+        {
+          "id": "target_object",
+          "shape": "cylinder",
+          "size_m": [
+            0.044,
+            0.044,
+            0.12
+          ],
+          "center_m": [
+            0.5252892056950728,
+            0.12427686489475392,
+            0.06
+          ],
+          "mass_kg": 0.05
+        },
+        {
+          "id": "bottle_a",
+          "shape": "cylinder",
+          "size_m": [
+            0.06,
+            0.06,
+            0.32
+          ],
+          "center_m": [
+            0.325343989577386,
+            0.2328510685088787,
+            0.16
+          ],
+          "description": "Stationary tabletop clutter."
+        },
+        {
+          "id": "box_b",
+          "shape": "box",
+          "size_m": [
+            0.08,
+            0.08,
+            0.08
+          ],
+          "center_m": [
+            0.66,
+            -0.28,
+            0.04
+          ],
+          "description": "Stationary tabletop clutter."
+        }
+      ]
+    },
+    {
+      "id": "unseen_10",
+      "target_id": "target_object",
+      "objects": [
+        {
+          "id": "target_object",
+          "shape": "cylinder",
+          "size_m": [
+            0.044,
+            0.044,
+            0.12
+          ],
+          "center_m": [
+            0.4695384511273853,
+            -0.007274196520925057,
+            0.06
+          ],
+          "mass_kg": 0.05
+        },
+        {
+          "id": "bottle_a",
+          "shape": "cylinder",
+          "size_m": [
+            0.03,
+            0.03,
+            0.24
+          ],
+          "center_m": [
+            0.5554577843325921,
+            -0.07350737043059656,
+            0.12
+          ],
+          "description": "Stationary tabletop clutter."
+        },
+        {
+          "id": "box_b",
+          "shape": "box",
+          "size_m": [
+            0.08,
+            0.08,
+            0.08
+          ],
+          "center_m": [
+            0.66,
+            0.28,
+            0.04
+          ],
+          "description": "Stationary tabletop clutter."
+        }
+      ]
+    },
+    {
+      "id": "unseen_11",
+      "target_id": "target_object",
+      "objects": [
+        {
+          "id": "target_object",
+          "shape": "cylinder",
+          "size_m": [
+            0.044,
+            0.044,
+            0.12
+          ],
+          "center_m": [
+            0.5414973805584267,
+            -0.04951370994269704,
+            0.06
+          ],
+          "mass_kg": 0.05
+        },
+        {
+          "id": "bottle_a",
+          "shape": "cylinder",
+          "size_m": [
+            0.044,
+            0.044,
+            0.24
+          ],
+          "center_m": [
+            0.4197952223435742,
+            0.06206151171783972,
+            0.12
+          ],
+          "description": "Stationary tabletop clutter."
+        },
+        {
+          "id": "box_b",
+          "shape": "box",
+          "size_m": [
+            0.08,
+            0.08,
+            0.08
+          ],
+          "center_m": [
+            0.66,
+            0.28,
+            0.04
+          ],
+          "description": "Stationary tabletop clutter."
+        }
+      ]
+    }
+  ]
+}
