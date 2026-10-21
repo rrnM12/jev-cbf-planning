@@ -26,6 +26,8 @@ implementation checklist. Follow the user's latest directions if they differ.
   local/ignored. Verify tests, staged credential exclusion, upstream cleanliness
   and remote commit identity. No device connection, installation, new experiment
   or provider call is included in this publication request.
+  Implementation commit `6be13ca` has been pushed to `origin/main` and its remote
+  hash verified. Generated evidence remains local. No further automatic work.
 - Active authorization (21 October; D20): build the approved hardware-unverified
   camera plumbing: shared frames/replay, explicit calibration, optional RealSense
   adapter, separate masks, background acquisition/processing/recording, inspection
@@ -35,7 +37,7 @@ implementation checklist. Follow the user's latest directions if they differ.
   This checkpoint is now complete locally: 117 passing tests, replay-to-CBF
   simulation integration and an offline scene/wrist inspection at
   `artifacts/camera/review_v1/index.html`. See PROGRESS.md for evidence and limits.
-  No SDK/device was used; upstreams remain clean. Changes are not yet published.
+  No SDK/device was used; upstreams remain clean. Source is published under D21.
   Do not connect hardware, install drivers, start new experiments or push without
   new direction. The earlier simulation datasets/gallery remain unchanged.
 - Publication authorization (21 October; D19): Nihar requested pushing the

@@ -4,7 +4,7 @@ Updated: 21 October 2026.
 
 ## Current checkpoint
 
-### Publication requested: camera plumbing
+### Published: camera plumbing
 
 Nihar requested pushing the completed D20 changes on 21 October (D21). Publish
 source, tests, the unverified camera configuration and documentation to the
@@ -16,8 +16,13 @@ Pre-publication checks pass: all 117 tests pass again in 52.733 s, the 14 staged
 source/test/configuration/documentation files contain no configured key, generated
 artifacts remain excluded, and the provider ledger is unchanged. The fetched
 remote main matches starting commit `b36a5a1`; all upstream worktrees are clean.
+Implementation commit `6be13ca8d8714457976063bc16be4cebd16b1663` was pushed
+successfully to `origin/main`; GitHub's remote branch hash was independently
+verified with `git ls-remote`. This publication-status update is documentation
+only. No generated evidence, credential, SDK installation or upstream change is
+included in the publication. No further automatic work is running.
 
-### Complete locally: hardware-unverified camera plumbing
+### Complete: hardware-unverified camera plumbing
 
 Nihar approved the six-part camera plan (D20): shared frame/replay inputs,
 explicit calibration/projection, optional RealSense capture adapter, replaceable
@@ -65,8 +70,9 @@ were inspected; this is not full-browser visual certification. Evidence is under
 Security checks found no configured key in the source/new camera artifacts;
 `.env.local` remains ignored/untracked and mode 0600. The cumulative ledger is
 unchanged at 374 provider requests ($0.366746268 estimated; $3.088318464 reserved).
-FRAX, OSCBF and CBFpy worktrees are still clean. All D20 changes are local and
-uncommitted; no new background work is running after verification.
+FRAX, OSCBF and CBFpy worktrees are still clean. D20 source/tests/documentation
+are published under D21 above; generated evidence stays local/ignored. No new
+background work is running after verification.
 
 Still unverified: actual device model/serial/count, host SDK compatibility,
 mounting and hand–eye/extrinsic calibration, capture-to-robot clock mapping,
