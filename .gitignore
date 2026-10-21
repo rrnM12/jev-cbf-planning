@@ -1,0 +1,9 @@
+.venv/
+.uv-cache/
+__pycache__/
+*.py[cod]
+MUJOCO_LOG.TXT
+.DS_Store
+artifacts/
+.env
+.env.*

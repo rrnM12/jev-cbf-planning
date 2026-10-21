@@ -1,0 +1,24 @@
+[project]
+name = "jev-cbf-planning"
+version = "0.0.0"
+description = "Inspectable experiments for Jev-selected CBF geometry, reusing FRAX"
+requires-python = ">=3.12"
+# Runtime requirements from the checked-out FRAX/CBFpy packages and OSCBF demo.
+# The upstream packages themselves are imported from the read-only checkouts.
+dependencies = [
+    "elastiqp[jax]>=0.1.0",
+    "jax>=0.9.1",
+    "lxml",
+    "mujoco>=3.3.1",
+    "networkx",
+    "numpy",
+    "packaging",
+    "pyyaml",
+    "qpax",
+]
+
+[project.optional-dependencies]
+jev = ["typesafe-sdk>=0.7.5"]
+
+[tool.uv]
+package = false

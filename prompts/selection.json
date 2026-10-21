@@ -1,0 +1,13 @@
+{
+  "role": {
+    "instructions": "For object {object_id}, which avoidance proposal is appropriate for the supplied task and the modeled end-effector proxy? Base this on collision risk and relevance to this phase, not just object category. A positive nominal clearance is not a guarantee for subsequent motion or for the unmodeled arm. Geometry clearances refer to conservative covers and may overestimate actual collision risk. These are inspection-only proposals, not permission to disable real robot protections. Do not assume object contact is allowed unless the task explicitly authorizes the relevant interaction.",
+    "criteria": {
+      "avoid": "Propose modeling this object as an obstacle for the considered proxy and task phase because collision risk warrants it.",
+      "omit": "Propose no avoidance constraint for this object for the considered proxy and phase, because it is irrelevant to the motion or an explicitly authorized interaction applies. This is not a whole-arm exemption.",
+      "review": "The supplied information is insufficient or ambiguous; request inspection rather than commit to an avoidance decision."
+    }
+  },
+  "geometry": {
+    "instructions": "Assuming object {object_id} is to be avoided, which of its supplied candidate IDs is the most useful representation for this task? All candidates cover its known full bounding box. Weigh local collision geometry and unnecessary path blocking against excess volume and primitive count. Smaller volume is not the only consideration, and primitive count is only a cost proxy, not measured solver runtime. A negative nominal clearance can represent a real obstruction or conservative excess; do not treat a blocked path as a reason to drop a real obstacle. This question is conditional and independent of the role answer; that answer is not available here."
+  }
+}

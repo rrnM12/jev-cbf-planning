@@ -1,0 +1,34 @@
+{
+  "description": "Synthetic tabletop selection fixture, not a simulated robot episode. Objects are static and axis-aligned. The table and the rest of the arm are not modeled.",
+  "frame": "world; lengths in metres; Z points up; table surface is Z=0",
+  "task": "Move the end-effector sphere proxy from start to goal without touching any scene object. The straight segment is a nominal motion, not a verified safe path. A controller or planner may need to deviate. This is free-space motion only; no object contact is authorized.",
+  "robot_proxy": {
+    "description": "A single spherical end-effector proxy, not a whole-arm collision model.",
+    "start_m": [0.10, 0.0, 0.06],
+    "goal_m": [0.60, 0.0, 0.06],
+    "radius_m": 0.025
+  },
+  "objects": [
+    {
+      "id": "bottle",
+      "description": "Bottle-shaped circular cylinder standing on the table.",
+      "shape": "cylinder",
+      "size_m": [0.07, 0.07, 0.30],
+      "center_m": [0.30, 0.09, 0.15]
+    },
+    {
+      "id": "cube",
+      "description": "Compact cube resting on the table.",
+      "shape": "box",
+      "size_m": [0.08, 0.08, 0.08],
+      "center_m": [0.44, -0.06, 0.04]
+    },
+    {
+      "id": "far_cube",
+      "description": "Another compact cube resting on the table.",
+      "shape": "box",
+      "size_m": [0.08, 0.08, 0.08],
+      "center_m": [0.25, 0.45, 0.04]
+    }
+  ]
+}

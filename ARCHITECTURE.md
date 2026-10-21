@@ -1,9 +1,24 @@
 # Jev-selected CBFs: evolving architecture and working plan
 
 Status: a living research plan, not a frozen implementation specification.
-Updated 20 October 2026. The `jev-cbf-planning` repository currently contains this
-document, not an implemented framework. This revision updates the planning approach;
-it does not start implementation, installation, experiments, or hardware deployment.
+Updated 20 October 2026. The first-checkpoint launcher and environment are in place;
+the original Panda demo passes a bounded 1,000-step run with finite states/torques
+and positive sampled model barriers. The baseline execution checkpoint and agent
+network/GUI workflow are verified. Nihar approved the next isolated sphere-cover
+experiment: the generator, numeric checks, comparison viewer, and initial review
+of Nihar's screenshots are complete. Nihar then approved a tiny standalone Jev
+experiment. Editable scene/questions, request preview, and a thin SDK adapter are
+implemented. The first live request returned `jev-1.13.0` in 0.629 s
+with valid proposals; uncertain cube geometry is a check-in topic, not an optimality
+or safety result. Nihar approved a scene viewer of that saved result: implemented,
+39 offline tests pass, and bounded oblique/top-down launches exit normally. Nihar
+visually reviewed the new viewer and said "looks good"; this checkpoint is complete.
+No selection controls the robot. Interactive robot
+stress tests and independent safety evaluation remain unverified.
+The full Jev framework is not built. See [PROGRESS.md](PROGRESS.md)
+for current results, blockers, and the decision log, and [AGENTS.md](AGENTS.md) for
+repository working rules. Future directions below are not automatic implementation
+instructions or approval for hardware deployment.
 
 The agreed direction is a **new standalone repository** that imports and calls
 existing FRAX, OSCBF, and CBFpy implementations. It owns the task-conditioned
@@ -283,8 +298,10 @@ conditions gives an intersection of allowed robot configurations. Avoiding an
 intersection of obstacle primitives would require disjunctive logic; that is not
 the proposed implementation.
 
-When geometric generation becomes the chosen next step, sphere covers are a
-simple starting point. A possible family to inspect and refine is:
+The approved isolated geometry checkpoint now implements box-section sphere
+covers with 1/2/4 sections and numeric/visual inspection tools; see README and
+PROGRESS for commands, observed excess volumes, and validation limits. No covers
+are connected to the controller yet. The broader family below remains provisional:
 
 1. One sphere enclosing the object-local bounding box.
 2. Two spheres enclosing two equal box sections along its longest axis.
@@ -300,12 +317,15 @@ Transform primitives from object to world using the same reported object pose.
 
 This is a deterministic, conservative generator, not a learned shape generator.
 Bounding boxes may themselves be loose; these candidates are not claimed to be
-optimal approximations of a mesh. Handle degenerate extents explicitly with a
-documented positive minimum and reject nonfinite/negative dimensions.
+optimal approximations of a mesh. The current positive-volume box/cylinder
+experiment rejects zero/nonfinite/negative extents rather than silently inflating
+them. Revisit degenerate measurements explicitly when perception is introduced.
 
 Coverage is a hard candidate-admissibility condition in the ground-truth stage.
-Estimate excess **union** volume against actual simulator geometry using shared,
+Estimate excess **union** volume against actual reference geometry using shared,
 seeded samples; summing overlapping primitive volumes would double-count overlap.
+The isolated experiment uses exact analytic boxes/cylinders, not simulator meshes;
+simulator-geometry coverage remains a later check when that integration is chosen.
 Report that estimate separately from the analytic coverage certificate. Compute
 candidate features outside Jev, including primitive/pair counts and geometric
 costs. Use the same samples across methods and record sampling uncertainty.
@@ -400,7 +420,10 @@ model's proposal should be visible in the result.
 Mocks, replay, or a simple numeric selector can help investigate one component.
 Use them when useful, label them accurately, and do not require all baselines or
 a predetermined numerical cost function before trying the first Jev example.
-No SDK installation or billed requests are authorized by this document revision.
+Nihar subsequently approved a tiny standalone text-only Jev experiment after
+geometry review. Its optional SDK/preview are implemented and a first live request
+has succeeded using local credentials. This narrow approval does not authorize a continuous querying
+loop or deployment of model proposals into control.
 
 ## 6. Interactions, grasping, and object motion
 
@@ -609,12 +632,18 @@ deliberate compatibility boundary, not a claim that the whole old stack is compa
 
 Approved setup direction: use `uv` with an isolated environment in the Jev project,
 reuse the current read-only upstream checkouts, and try Nihar's Mac first. The
-reviewed runtime candidate was Python 3.12 with compatible JAX >= 0.9.1,
-MuJoCo >= 3.3.1, ElastiQP, and the checked-out FRAX/CBFpy. Check actual demo needs
-before resolving versions; this is not a tested environment or a Mac compatibility
-claim. The TypeSafe SDK is for later Jev integration, not required just to reproduce
-the controller demo. Record/lock versions as setup is verified. No installation
-is performed by this documentation update.
+reviewed runtime candidate was Python 3.12 with JAX >= 0.9.1, MuJoCo >= 3.3.1,
+ElastiQP, and the checked-out FRAX/CBFpy. A project environment and generated
+`uv.lock` now exist; imports and a headless model/CBF smoke check pass. This does
+not establish general safety: the bounded 1,000-step original-controller run
+passes its default-target smoke checks, but visual stress cases and independent
+constraint evaluation remain unverified. GUI/network operations follow current
+runtime permissions rather than manual Terminal handoffs. Current versions and evidence are
+recorded in PROGRESS.md. The official TypeSafe SDK 0.7.5 is now installed as an
+optional project extra for the approved standalone selection experiment; its
+adapter passes local fake-transport tests. It is not needed to reproduce the
+controller demo. Live API access is verified by one successful request; general
+model performance, latency distribution, and robotics safety remain unverified.
 
 Observed source revisions (20 Oct 2026):
 
@@ -757,7 +786,13 @@ Nihar approved these choices for the first checkpoint:
    upstream checkouts.
 3. Try the current Mac first; report compatibility problems before changing course.
 
-These are approved choices, not a claim that setup or the demo has been executed.
+These choices were subsequently implemented and the bounded baseline run verified;
+see PROGRESS.md for evidence and limits. Nihar then approved isolated sphere-cover
+generation, coverage/excess-space checks, and inspectable visualizations. After
+reviewing both screenshots, Nihar approved the tiny standalone text-only Jev
+experiment. This includes a preview and SDK adapter, not connection of new
+constraints to the controller. The first live request has succeeded; review the
+actual choices and uncertainty before choosing the next step.
 
 ### Questions to revisit only when relevant
 
@@ -784,8 +819,10 @@ merely refreshing constraints. Learned policies would need an action adapter;
 moving obstacles need the dynamics/time-derivative treatment in Section 6.
 Keep those distinctions in mind without designing every extension in advance.
 
-Current deliverable: this document revision. No installation, implementation,
-billed API calls, or new runs are started by updating the plan.
+Nihar authorized the baseline checkpoint and, after its completion, the isolated
+sphere-cover and standalone selection checkpoints. Actual implementation/execution status lives in
+PROGRESS.md; these authorizations do not extend to unselected research proposals,
+continuous model querying, controller deployment, or hardware work.
 
 ## 14. Engineer handoff: one checkpoint at a time
 
@@ -801,8 +838,10 @@ repositories unchanged. Use `uv` and an isolated project environment with the
 existing read-only upstream checkouts. Try Nihar's current Mac first, and report
 compatibility problems before changing course.
 
-These choices define the next implementation checkpoint; recording them does not
-itself perform installation, add implementation code, or run the simulator.
+These choices define the first implementation checkpoint, which Nihar has now
+completed and reviewed sufficiently to approve the isolated geometry step. Track
+what has actually been implemented/run in PROGRESS.md;
+an approved setup choice is not evidence that setup or simulation succeeded.
 
 Use the smallest natural entry point/adapter needed. Determine the actual
 dependency/import requirements and report mismatches rather than quietly copying
@@ -823,6 +862,13 @@ evidence. It might be inspecting primitive coverage, examining Jev decisions on
 a tiny scene, changing an interface, or resolving a compatibility issue. This is
 not a mandatory sequence, and later tasks may change after each result.
 
+Current check-in: baseline and isolated sphere-cover review are complete. Nihar
+chose a tiny standalone Jev experiment next. Its synthetic scene uses a swept
+end-effector sphere proxy (not the FRAX arm), with editable questions and no
+authorized object contact. The preview/SDK adapter, offline tests, and first live
+response are available. Review the ambiguous cube geometry choice before deciding
+on prompt comparisons, task variations, or controller integration.
+
 When selection work begins, start with inspectable examples and easily editable
 questions/orchestration. Review its outputs before committing to a taxonomy,
 call structure, confidence policy, or refresh strategy.
@@ -842,5 +888,7 @@ the mismatch and options rather than silently editing the dependency.
 For each agreed step, keep its code, relevant settings, a short usage explanation,
 and the evidence/status needed for review. Apply Section 11's checks as their
 features are introduced, not as a demand to implement the final system first.
-Installation, model spending, simulator runs, and hardware work follow the
-separately agreed execution scope. This document update starts none of them.
+Environment setup, the baseline, isolated geometry, and tiny standalone selection
+experiment are authorized. Hardware, continuous querying, controller deployment,
+and unselected later features remain outside that scope. Report actual results
+and blockers in PROGRESS.md.
