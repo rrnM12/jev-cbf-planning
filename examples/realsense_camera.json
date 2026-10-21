@@ -1,0 +1,8 @@
+{
+  "note": "UNVERIFIED template, not the lab setup. Null serial only permits SDK selection if exactly one device is present. Zero dimensions/fps let the SDK resolve supported profiles; they are not verified performance settings.",
+  "camera_id": "camera",
+  "serial": null,
+  "align_depth_to_color": true,
+  "depth": {"width": 0, "height": 0, "fps": 0},
+  "color": {"width": 0, "height": 0, "fps": 0}
+}

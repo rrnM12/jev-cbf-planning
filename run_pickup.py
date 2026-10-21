@@ -23,7 +23,7 @@ from run_static import load_upstream, run_case
 from run_suite import check_manifest, digest, read, save
 
 
-SOURCES = ("pickup.py", "run_pickup.py", "run_static.py", "runtime_cbf.py", "sim_model.py", "online.py", "inspect_selection.py", "api_budget.py", "geometry.py", "robot_selection.py", "study_pickup.py", "perception.py", "pickup_layouts.py")
+SOURCES = ("pickup.py", "run_pickup.py", "run_static.py", "runtime_cbf.py", "sim_model.py", "online.py", "inspect_selection.py", "api_budget.py", "geometry.py", "robot_selection.py", "study_pickup.py", "perception.py", "pickup_layouts.py", "camera_io.py", "realsense_camera.py")
 BUDGET_PATH = ROOT/"artifacts/usage/pickup_research_v1.json"
 
 

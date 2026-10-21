@@ -4,6 +4,79 @@ Updated: 21 October 2026.
 
 ## Current checkpoint
 
+### Publication requested: camera plumbing
+
+Nihar requested pushing the completed D20 changes on 21 October (D21). Publish
+source, tests, the unverified camera configuration and documentation to the
+existing Jev repository. Generated camera recordings, inspection pages, test
+reports, credentials and environments remain local/ignored. Verify the final
+tests, exact-key exclusion, unchanged upstreams and remote commit identity.
+This request does not authorize hardware access or new research/provider calls.
+Pre-publication checks pass: all 117 tests pass again in 52.733 s, the 14 staged
+source/test/configuration/documentation files contain no configured key, generated
+artifacts remain excluded, and the provider ledger is unchanged. The fetched
+remote main matches starting commit `b36a5a1`; all upstream worktrees are clean.
+
+### Complete locally: hardware-unverified camera plumbing
+
+Nihar approved the six-part camera plan (D20): shared frame/replay inputs,
+explicit calibration/projection, optional RealSense capture adapter, replaceable
+instance masks, background I/O/processing and a replay inspection tool. Implemented
+on top of clean published `b36a5a1`, entirely inside this repository. No device
+connection, physical robot command, Jev call, SDK/driver installation, upstream
+edit or new push was made. Earlier datasets and galleries are preserved.
+
+Review `artifacts/camera/review_v1/index.html`: replayed native scene/wrist RGB,
+display-scaled depth, explicit oracle masks, metric point downloads and fitted
+box/sphere projections. These are inspection snapshots, not new pickup rollouts.
+`artifacts/camera/camera_only_preview_v1/index.html` demonstrates preview without
+robot calibration, which deliberately generates no robot-frame geometry.
+
+Implemented boundaries:
+
+- `camera_io.py`: owned RGBD frames, explicit intrinsics/distortion/optical axes,
+  calibrated fixed/wrist transforms, hash-checked portable recording/replay and
+  a source-owned worker exposing only completed snapshots to consumers.
+- `realsense_camera.py`: optional lazy SDK adapter, explicit serial/profile
+  selection, metric depth scale, aligned/native profiles, SDK-derived points,
+  cross-stream extrinsics, capture-clock metadata and cleanup. Strict SDK doubles
+  exercise these calls; no actual SDK or camera is installed/verified here.
+- `perception.FrameGeometry`: separately supplied depth-grid masks and calibration
+  feed the existing fitting/candidate functions. Static multiview estimates retain
+  missing observations with unchanged last-seen times, not renewed confidence.
+- `PerceivedPickupRuntime(..., observation_source=worker)`: optional simulation
+  handoff of prepared geometry, preserving the original CBF/controller and native
+  physical scene. A four-step native integration test traps synchronous capture
+  and candidate generation in this path; both remain outside its control hook.
+  The original synchronous simulation path stays available for old behavior.
+- `inspect_camera.py`: offline demo/replay inspection plus an explicit future
+  camera-only `live` command. Only that command constructs the optional SDK source;
+  it has not been run. The example configuration is unverified, not a lab preset.
+
+Verification: **117 tests pass** in 53.995 s (`regression_d20_final.json`), including
+SDK doubles, metric projection/legacy-frame equivalence, distortion handling,
+calibration/clock/serial guards, recording tamper detection, worker timeout/error/
+EOF/close behavior, stale-mask provenance and replay-to-CBF simulation handoff.
+`review_checks_d20.json` validates 11 local references, four finite SVG projections,
+two calibrated camera views and the unconfigured preview. Native RGB/mask images
+were inspected; this is not full-browser visual certification. Evidence is under
+`artifacts/camera/`; `handoff_checks_d20.json` binds source/evidence hashes.
+
+Security checks found no configured key in the source/new camera artifacts;
+`.env.local` remains ignored/untracked and mode 0600. The cumulative ledger is
+unchanged at 374 provider requests ($0.366746268 estimated; $3.088318464 reserved).
+FRAX, OSCBF and CBFpy worktrees are still clean. All D20 changes are local and
+uncommitted; no new background work is running after verification.
+
+Still unverified: actual device model/serial/count, host SDK compatibility,
+mounting and hand–eye/extrinsic calibration, capture-to-robot clock mapping,
+live multi-camera synchronization and segmentation. Support height and padding
+are explicit experimental inputs, not calibrated uncertainty. The synthetic
+wrist transform is valid only at its recorded capture; missing calibration or
+masks never become an empty safe scene. No learned detector, active perception,
+hard-real-time guarantee or hardware-safe fallback is claimed. Await the next
+direction; do not infer authorization to connect devices, run studies or publish.
+
 ### Complete: richer selection, unseen evaluation and simulated perception
 
 The D18 work is implemented and evaluated. Start at
@@ -53,9 +126,11 @@ unavailable-model paths retain existing policy, not a certified safe fallback.
 One late response is explicitly ignored. Static clutter limits what stale-frame
 success establishes. `camera_control_v1/fault_diagnostics.json` distinguishes
 injected faults, actual query errors and observation ages.
-Only Jev has a background worker: periodic camera capture/fitting and evidence
-logging currently execute synchronously before control and can delay a step.
-Hard-real-time acquisition isolation and active viewpoint planning are not built.
+In this retained D18 simulation path, only Jev has a background worker: periodic
+camera capture/fitting and evidence logging execute synchronously before control
+and can delay a step. D20 adds the separate prepared-snapshot path described above;
+it does not change these historical study runs. Hard-real-time guarantees and
+active viewpoint planning are not built.
 
 Evidence-driven startup correction (separate from frozen results): selection
 modes now initialize with the least-excess currently RD2-admissible candidate for

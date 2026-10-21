@@ -14,6 +14,89 @@ evolving research plan is in [ARCHITECTURE.md](ARCHITECTURE.md).
 Current progress, verification, blockers, and decision history are in
 [PROGRESS.md](PROGRESS.md); repository working rules are in [AGENTS.md](AGENTS.md).
 
+## Camera plumbing (hardware unverified)
+
+The new camera boundary supports simulated frames, portable record/replay, an
+optional RealSense SDK adapter, and background observation processing. No camera
+was connected, no SDK/driver was installed, and no physical robot was controlled.
+RealSense adapter tests use strict SDK doubles, not evidence of device/OS support.
+
+Generate a two-camera native-simulation recording and inspection page (no arm
+controls, RealSense SDK or Jev calls; choose a new output directory each time):
+
+```bash
+uv run --offline --frozen --cache-dir .uv-cache python -B inspect_camera.py demo --output artifacts/camera/MY_DEMO
+open artifacts/camera/MY_DEMO/inspection/index.html
+```
+
+Replay without either a camera or the SDK:
+
+```bash
+uv run --offline --frozen --cache-dir .uv-cache python -B inspect_camera.py replay --recording artifacts/camera/MY_DEMO/recording --calibration artifacts/camera/MY_DEMO/calibration.json --output artifacts/camera/MY_REPLAY
+```
+
+Omit `--calibration` for camera-only RGB/depth/mask inspection. That mode does
+not guess robot-frame positions or generate robot-frame geometry. With calibration
+and support height, the page also shows estimated-box/sphere projections. It links
+metric camera-frame points and measurement metadata in either mode. Synthetic
+masks/calibration are labeled as such; the demo's
+capture-only wrist transform is not a reusable hand–eye calibration.
+
+| Module | Boundary |
+| --- | --- |
+| `camera_io.py` | Metric RGBD frames/intrinsics, optical projection, explicit transforms, hash-checked NPZ/JSON recording/replay and a completed-snapshot worker. No SDK or robot driver. |
+| `realsense_camera.py` | Lazy SDK import, serial selection, configurable profiles, RGB alignment, measured depth scale, SDK-derived points and cleanup. Device compatibility remains unverified. |
+| `perception.FrameGeometry` | Separately supplied depth-grid masks/IDs + calibration → existing box fitting/sphere candidates. One latest view per camera for static clutter, with per-object last-seen provenance. |
+| `PerceivedPickupRuntime(..., observation_source=worker)` | Optional simulation consumer of already prepared geometry. No capture/fitting/candidate generation/camera-recording I/O in its control hook; existing admission and target guards remain. Caller owns the worker. |
+| `inspect_camera.py` | Offline demo/replay inspection, plus an explicit future camera-only `live` entry point. Never sends robot commands. |
+
+Important conventions:
+
+- Frames use optical +X right, +Y down, +Z forward in metres. Intrinsics refer
+  to the depth grid; integer pixel indices are pixel centers. The existing
+  MuJoCo projection stays available and equivalence is tested. RealSense
+  distortion is handled by SDK-derived organized points, not silently ignored;
+  those points are stored for SDK-free replay. See the official
+  [projection reference](https://github.com/realsenseai/librealsense/wiki/Projection-in-RealSense-SDK-2.0).
+- A calibration entry names its optical frame and provenance. `mount: fixed`
+  requires `T_robot_optical`; `mount: wrist` requires `T_ee_optical` and a supplied
+  pose provider returning `T_robot_ee` at the requested capture timestamp/domain.
+  Optional `device_serial` binds calibration to a producer. Missing/invalid
+  calibration is not identity. An explicit table support height is also required
+  for geometry fitting. No hand–eye calibration solver or robot pose transport
+  has been invented here.
+- Camera timestamp/domain, host receipt time, and snapshot-publication age are
+  distinct. Replay preserves recorded capture times and labels renewed host
+  receipt. SDK timestamps do not establish exposure-to-robot synchronization.
+  Alignment is not multi-camera hardware synchronization. See the SDK's
+  [timestamp definitions](https://github.com/realsenseai/librealsense/blob/master/include/librealsense2/hpp/rs_frame.hpp).
+- Masks are a separate provider and must use the depth pixel grid. RealSense
+  capture supplies no object detector. Missing masks/calibration do not become
+  an empty obstacle list. Missing observations can retain stale static-object
+  estimates without refreshing last-seen times; this is not certified coverage.
+  The pickup target and robot model remain known, and target geometry is excluded
+  from static-clutter fusion in the integration example.
+- `CameraWorker` owns acquisition/processing/recording on its thread and exposes
+  completed snapshots without camera I/O in `latest()`. Its configurable read
+  wait and bounded close are transport mechanisms, not safety deadlines. A failed
+  or unresponsive source is reported; retained snapshots are not a safe fallback.
+  Native MuJoCo GL remains on its owner thread; the legacy synchronous simulation
+  camera path is deliberately preserved. The external/replay path is the tested
+  asynchronous alternative, not a hard-real-time claim.
+
+Future live capture has a separate, explicit entry point and an **unverified**
+configuration template at `examples/realsense_camera.json`. Only `live` constructs
+the SDK source/enumerates devices. Zero profile fields mean SDK-resolved values,
+not a recommended frame rate/resolution. No real model, serial, camera count or
+mount is assumed. Each physical device uses its own source; live rig orchestration,
+cross-device synchronization, calibrated uncertainty and learned segmentation
+remain future work once the lab setup is known. SDK installation/build selection
+is deferred to that host; ordinary replay/tests have no new dependency.
+
+Current local review: `artifacts/camera/review_v1/index.html`. The full regression
+suite passes 117 tests, including a native simulation consuming prepared replay
+geometry through the existing CBF filter. This is software evidence only.
+
 ## Start here: static-clutter pickup
 
 ```bash
@@ -72,13 +155,15 @@ prediction and frozen failures are retained. Refusals are not safe pickups,
 hardware safe stops, or proof of true-object coverage.
 
 All 354 frozen study trajectories pass independent native re-evaluation; four
-additional correction trajectories also pass. 101 regression tests pass.
+additional correction trajectories also pass. That D18 checkpoint passed 101
+regression tests; the camera plumbing brings the current total to 117.
 Warm-filter microbenchmarks retain fixed allocated rows (348 small / 696 rich);
 masking fewer pairs does not demonstrate a runtime speedup or real-time control.
-Jev requests use a background worker, but periodic camera capture/fitting and
-evidence logging are currently synchronous before-control work. They can delay
-a simulation control step; asynchronous sensor isolation and active viewpoint
-planning are not implemented.
+In those retained study runs, Jev requests use a background worker, but periodic
+camera capture/fitting and evidence logging are synchronous before-control work
+and can delay a simulation step. The new optional prepared-snapshot camera path
+above isolates acquisition/processing; it does not change old runs or establish
+hard-real-time behavior. Active viewpoint planning is not implemented.
 The cumulative ledger has 374 logical provider requests: estimated reported
 token cost $0.366746268 and conservative reservations $3.088318464 under $7.50.
 No new provider calls are needed to inspect the package.

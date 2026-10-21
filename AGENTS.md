@@ -19,6 +19,25 @@ implementation checklist. Follow the user's latest directions if they differ.
 
 ## Work one checkpoint at a time
 
+- Publication authorization (21 October; D21): Nihar requested pushing the
+  completed D20 camera plumbing to the existing Jev repository. Commit/push
+  source, tests, the unverified example configuration and documentation only.
+  Keep credentials, environments, caches and generated camera/experiment data
+  local/ignored. Verify tests, staged credential exclusion, upstream cleanliness
+  and remote commit identity. No device connection, installation, new experiment
+  or provider call is included in this publication request.
+- Active authorization (21 October; D20): build the approved hardware-unverified
+  camera plumbing: shared frames/replay, explicit calibration, optional RealSense
+  adapter, separate masks, background acquisition/processing/recording, inspection
+  and offline tests. Keep old simulation numerics available. No device connection,
+  robot deployment, learned detector, Jev calls, upstream edits or new push.
+  SDK mocks and synthetic/simulator data are software evidence, not hardware QA.
+  This checkpoint is now complete locally: 117 passing tests, replay-to-CBF
+  simulation integration and an offline scene/wrist inspection at
+  `artifacts/camera/review_v1/index.html`. See PROGRESS.md for evidence and limits.
+  No SDK/device was used; upstreams remain clean. Changes are not yet published.
+  Do not connect hardware, install drivers, start new experiments or push without
+  new direction. The earlier simulation datasets/gallery remain unchanged.
 - Publication authorization (21 October; D19): Nihar requested pushing the
   completed D18 checkpoint to the existing Jev repository. Commit/push source,
   tests, fixtures and documentation only. Keep credentials, environments, caches,

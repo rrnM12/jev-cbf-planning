@@ -19,6 +19,7 @@ from pickup import PickupRuntime,pickup_request
 from run_static import load_upstream
 from run_suite import read,save
 from static_gallery import write_apng
+from camera_io import CameraFrame, Intrinsics, masked_clouds, robot_transform
 
 
 def camera_axes(eye,lookat):
@@ -72,10 +73,45 @@ def fit_objects(clouds,*,margin_m=.005,support_z=0.):
 class RGBD:
     def __init__(self,mj,model,object_ids,*,width=320,height=240):
         self.mj,self.model=mj,model
+        self.width,self.height=width,height
         self.geoms={name:model.geom('scene/'+name).id for name in object_ids}
         model.geom('target_geom').rgba[3]=0  # Hide the upstream control marker, not the pickup object.
         self.renderer=mj.Renderer(model,width=width,height=height)
         self.option=mj.MjvOption();self.option.geomgroup[3]=0;self.option.geomgroup[4]=0
+
+    def render_camera(self,data,name):
+        self.renderer.update_scene(data,camera=name,scene_option=self.option)
+        self.renderer.disable_depth_rendering();self.renderer.disable_segmentation_rendering()
+        rgb=self.renderer.render().copy()
+        self.renderer.enable_depth_rendering();depth=self.renderer.render().copy()
+        self.renderer.disable_depth_rendering();self.renderer.enable_segmentation_rendering()
+        segmentation=self.renderer.render().copy();self.renderer.disable_segmentation_rendering()
+        return rgb,depth,segmentation
+
+    def capture_frames(self,data,*,cameras=('scene_camera','wrist_camera')):
+        """Common frame boundary + EXPLICIT oracle annotations, no control.
+
+        Native GL remains on its owner thread. RealSense/replay use their own
+        source/worker; no background thread touches this simulator's live MjData.
+        """
+        records=[]
+        for name in cameras:
+            camera=self.model.camera(name).id
+            rgb,depth,segmentation=self.render_camera(data,name)
+            focal=.5*self.height/np.tan(np.deg2rad(self.model.cam_fovy[camera])/2)
+            matrix=np.eye(4)
+            matrix[:3,:3]=data.cam_xmat[camera].reshape(3,3)@np.diag([1.,-1.,-1.])
+            matrix[:3,3]=data.cam_xpos[camera]
+            frame=CameraFrame(name,int(round(data.time/self.model.opt.timestep)),float(data.time),'simulation',
+                rgb,depth,Intrinsics(self.width,self.height,focal,focal,(self.width-1)/2,(self.height-1)/2),
+                name+'/optical',metadata={'source':'mujoco','synthetic_calibration':True,'rgb_depth_registered':True})
+            masks={obj:(segmentation[:,:,0]==geom)&(segmentation[:,:,1]==self.mj.mjtObj.mjOBJ_GEOM)
+                   for obj,geom in self.geoms.items()}
+            calibration=dict(mount='fixed',optical_frame=frame.optical_frame,T_robot_optical=matrix.tolist(),
+                             calibration_id='SYNTHETIC native pose at this capture; NOT hardware calibration',
+                             valid_capture_time_s=frame.capture_time_s,clock_domain=frame.clock_domain)
+            records.append((frame,masks,calibration))
+        return records
 
     def capture(self,data,folder=None,*,depth_noise_m=0.,dropout=0.,bias_m=(0.,0.,0.),seed=0,
                 cameras=('scene_camera','wrist_camera')):
@@ -84,12 +120,7 @@ class RGBD:
         if not cameras or not set(cameras)<= {'scene_camera','wrist_camera'}:raise ValueError('invalid camera selection')
         for name in cameras:
             camera=self.model.camera(name).id
-            self.renderer.update_scene(data,camera=name,scene_option=self.option)
-            self.renderer.disable_depth_rendering();self.renderer.disable_segmentation_rendering()
-            rgb=self.renderer.render().copy()
-            self.renderer.enable_depth_rendering();depth=self.renderer.render().copy()
-            self.renderer.disable_depth_rendering();self.renderer.enable_segmentation_rendering()
-            segmentation=self.renderer.render().copy();self.renderer.disable_segmentation_rendering()
+            rgb,depth,segmentation=self.render_camera(data,name)
             measured=depth+rng.normal(0.,depth_noise_m,depth.shape)
             world=backproject(measured,data.cam_xpos[camera],data.cam_xmat[camera],self.model.cam_fovy[camera])
             world+=np.asarray(bias_m)
@@ -130,6 +161,54 @@ def observed_candidates(obj,counts):
             for c,m in zip(covers,measures['candidates'],strict=True)]
 
 
+class FrameGeometry:
+    """Replaceable masks + calibrated frames -> existing fitting/candidate code.
+
+    One latest cloud per camera for STATIC clutter, not a moving-object tracker.
+    No data-source/robot communication is hidden inside geometry processing.
+    """
+    def __init__(self,calibration,mask_provider,*,support_z,margin_m=.005,expected_ids=(),
+                 excluded_ids=(),pose_provider=None,counts=(1,2,3,4,5,6,8)):
+        if support_z is None or not np.isfinite(support_z):
+            raise ValueError('geometry needs an explicit robot-frame table support height')
+        self.calibration,self.mask_provider=deepcopy(calibration),mask_provider
+        self.support_z,self.margin=float(support_z),margin_m
+        self.expected,self.excluded=set(expected_ids),set(excluded_ids)
+        self.pose_provider,self.counts=pose_provider,counts
+        self.views={}
+
+    def __call__(self,frame,source=None):
+        matrix=robot_transform(frame,self.calibration,pose_provider=self.pose_provider)
+        if self.mask_provider is None:
+            raise ValueError('object masks/identities are required; raw RGBD is not an empty obstacle scene')
+        masks,identity=self.mask_provider(frame,source)
+        if not identity:
+            raise ValueError('mask identity provenance is required')
+        clouds=masked_clouds(frame,{k:v for k,v in masks.items() if k not in self.excluded},matrix)
+        # An empty/newly missing mask does NOT refresh that object's last-seen time.
+        previous=self.views.get(frame.camera_id,{}).get('clouds',{})
+        seen=self.views.get(frame.camera_id,{}).get('seen',{}).copy()
+        retained={k:v for k,v in previous.items()}
+        for name,points in clouds.items():
+            if len(points):
+                retained[name]=points
+                seen[name]=dict(capture_time_s=frame.capture_time_s,clock_domain=frame.clock_domain,
+                                received_monotonic_s=frame.received_monotonic_s)
+        self.views[frame.camera_id]=dict(clouds=retained,seen=seen,identity_source=identity,
+                                        calibration_id=self.calibration[frame.camera_id]['calibration_id'])
+        names=set().union(*(v['clouds'] for v in self.views.values()))
+        fused={name:np.concatenate([v['clouds'][name] for v in self.views.values() if name in v['clouds']]) for name in sorted(names)}
+        estimates=fit_objects(fused,margin_m=self.margin,support_z=self.support_z)
+        for obj in estimates:obj['candidates']=observed_candidates(obj,self.counts)
+        observed={o['id'] for o in estimates};missing=sorted(self.expected-observed-self.excluded)
+        return dict(status='missing_known_objects' if missing else ('ready' if estimates else 'no_observed_objects'),estimated_objects=estimates,
+                    missing_known_objects=missing,camera_id=frame.camera_id,capture_time_s=frame.capture_time_s,
+                    clock_domain=frame.clock_domain,received_monotonic_s=frame.received_monotonic_s,
+                    views={camera:{k:deepcopy(v[k]) for k in ('seen','identity_source','calibration_id')} for camera,v in self.views.items()},
+                    support_z_m=self.support_z,assumed_padding_m=self.margin,
+                    scope='Static clutter from calibrated frame/mask providers. Retained missing views are stale, not verified coverage. Estimated bounds/clearance are not true-object or hardware safety certificates.')
+
+
 def observe_initial(scene,settings,robot,template,options,output,config):
     """Generate measured clutter inputs; keep only the designated target known."""
     demo,utils=load_upstream(ROOT.parent/'frax',ROOT.parent/'cbfpy');mj=utils.mujoco
@@ -163,16 +242,20 @@ class PerceivedPickupRuntime(PickupRuntime):
     grasp-pose estimation. Simulator instance identities remain oracle scaffolding.
     Physical scene truth is never replaced by the fitted boxes.
     """
-    def __init__(self,*args,**kwargs):
+    def __init__(self,*args,observation_source=None,**kwargs):
         args=list(args);args[2]=deepcopy(args[2])  # Never mutate a raw report's request.
         super().__init__(*args,**kwargs)
         legacy=self.base['state'].pop('observation_config',None)
         self.observation=deepcopy(self.scene.get('observation_config',legacy))
+        if self.observation is None and observation_source is not None:self.observation={}
         if self.observation is None:raise ValueError('perception runtime needs observation configuration')
         self.clouds={o['id']:[] for o in self.scene['objects'] if o['id']!=self.target_id}
         self.last_seen={name:None for name in self.clouds}
         self.applied_seen=self.last_seen.copy()
         self.next_observation=0.;self.observation_index=0;self.pending=[];self.observation_events=[]
+        # Caller owns/starts/stops the worker. Control only reads its snapshots.
+        self.observation_source=observation_source
+        self.external_sequence=0
 
     def scene_spec(self,mj,frax_dir,state,centers,radii):
         physical=deepcopy(state);physical['objects']=deepcopy(self.scene['objects'])
@@ -187,9 +270,37 @@ class PerceivedPickupRuntime(PickupRuntime):
 
     def initialize(self,env):
         super().initialize(env)
+        if self.observation_source is not None:
+            self.poll_external(initial=True)
+            return
         import mujoco as mj
         self.sensor=RGBD(mj,env.model,[o['id'] for o in self.scene['objects']])
         self.observe(initial=True)
+
+    def poll_external(self,*,initial=False):
+        snapshot=self.observation_source.latest()
+        if snapshot is None:
+            if initial:raise ValueError('external camera worker has no prepared geometry snapshot; no actuation')
+            return
+        if snapshot.sequence==self.external_sequence:return
+        self.external_sequence=snapshot.sequence
+        observation=snapshot.value;at=float(self.env.data.time)
+        if not isinstance(observation,dict):
+            raise ValueError('external control input needs prepared geometry, not a raw camera frame')
+        event=dict(snapshot_at_s=None,applied_at_s=at,external_camera=True,
+                   capture_time_s=observation.get('capture_time_s'),clock_domain=observation.get('clock_domain'),
+                   views=deepcopy(observation.get('views',{})),worker_health=self.observation_source.health())
+        expected={o['id'] for o in self.scene['objects'] if o['id']!=self.target_id}
+        observed={o['id'] for o in observation.get('estimated_objects',[])}
+        if observation.get('status')!='ready' or not expected<=observed or event['worker_health']['status']=='error':
+            event.update(status='rejected_previous_belief_retained',error='external geometry not ready, missing known clutter, or source error')
+            self.observation_events.append(event)
+            if initial:raise ValueError('external camera geometry cannot initialize known clutter; no actuation')
+            return
+        estimates=deepcopy(observation['estimated_objects'])
+        # No SDK, projection, fitting, candidate generation or disk I/O in this hook.
+        self.pending.append((at,estimates,event))
+        self.apply_observations(at,initial=initial)
 
     def observe(self,*,initial=False):
         at=float(self.env.data.time);config=self.observation
@@ -222,18 +333,22 @@ class PerceivedPickupRuntime(PickupRuntime):
                 for old in self.base['state']['objects']:
                     if old['id']==self.target_id:continue
                     estimate=next(o for o in estimates if o['id']==old['id'])
-                    old.update(deepcopy(estimate));old['candidates']=observed_candidates(estimate,counts)
+                    if self.observation_source is not None and any(len(c['radii_m'])>self.object_capacity for c in estimate.get('candidates',[])):
+                        raise ValueError('external candidate exceeds frozen per-object capacity')
+                    old.update(deepcopy(estimate))
+                    if self.observation_source is None:old['candidates']=observed_candidates(estimate,counts)
+                    elif not estimate.get('candidates'):raise ValueError('external worker did not prepare candidates')
                 if not initial:
                     event.update(self.admit(self.policy,self.env.data.qpos[:7],self.env.data.qvel[:7],at))
                 event.update(status='accepted',applied_at_s=float(at))
-                self.applied_seen=event['last_seen_by_object'].copy()
+                if 'last_seen_by_object' in event:self.applied_seen=event['last_seen_by_object'].copy()
             except (ValueError,StopIteration) as error:
                 self.base=previous
                 event.update(status='rejected_previous_belief_retained',applied_at_s=float(at),
                              error='missing known object' if isinstance(error,StopIteration) else str(error))
                 if initial:raise ValueError('initial camera observation cannot model every known clutter instance; no oracle fill-in') from error
             self.observation_events.append(event)
-            save(self.output/'observation_events.json',self.observation_events)
+            if self.observation_source is None:save(self.output/'observation_events.json',self.observation_events)
 
     def positions(self):
         positions=super().positions()
@@ -252,8 +367,10 @@ class PerceivedPickupRuntime(PickupRuntime):
 
     def before_control(self,env):
         at=float(env.data.time)
-        self.apply_observations(at)
-        if at+1e-9>=self.next_observation:self.observe()
+        if self.observation_source is None:
+            self.apply_observations(at)
+            if at+1e-9>=self.next_observation:self.observe()
+        else:self.poll_external()
         super().before_control(env)
 
     def make_request(self,q,v,at):
@@ -263,6 +380,12 @@ class PerceivedPickupRuntime(PickupRuntime):
         request['state']['observation_summary']={'source':'depth geometry; oracle instance identity',
             'geometry_age_s_by_object':{name:None if seen is None else float(at-seen) for name,seen in self.applied_seen.items()},
             'assumed_padding_m':self.observation.get('margin_m',.005)}
+        if self.observation_source is not None:
+            request['state']['description']='Static clutter from a prepared camera-worker geometry snapshot; mask identity/calibration provenance is explicit. Target geometry/pose and robot kinematics remain known.'
+            request['state']['observation_summary']={'source':'external camera-worker snapshot',
+                'worker_health':self.observation_source.health(),
+                'accepted_observation':deepcopy(next((e for e in reversed(self.observation_events) if e.get('status')=='accepted'),None)),
+                'note':'Host snapshot age is not exposure age or robot-clock synchronization. Missing observations never authorize object removal.'}
         return request
 
     def geometry_context_matches(self,report):
@@ -274,9 +397,13 @@ class PerceivedPickupRuntime(PickupRuntime):
 
     def finish(self,result,trajectory):
         super().finish(result,trajectory)
-        self.sensor.close()
+        if hasattr(self,'sensor'):self.sensor.close()
+        save(self.output/'observation_events.json',self.observation_events)
         result.update(observation_config=self.observation,observation_events=self.observation_events,
                       perception_scope='Clutter geometry comes from two calibrated RGB/depth cameras with oracle instance labels. Target geometry/pose and robot/camera kinematics remain known. Physical truth is used only for scene construction/evaluation, not clutter barrier parameters. Retained stale/rejected estimates are not a certified safety fallback.')
+        if self.observation_source is not None:
+            result['perception_scope']='Simulation consumed external prepared camera-worker snapshots. Capture/masks/calibration/fitting/recording are outside control. Target/robot remain known; caller owns the worker. No hardware capture, hard-real-time or physical-robot safety validation.'
+            result['camera_worker_health']=self.observation_source.health()
 
     def close(self):
         super().close()

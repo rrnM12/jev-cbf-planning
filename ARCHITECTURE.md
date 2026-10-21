@@ -9,6 +9,20 @@ failures. Start at `artifacts/pickup/review/index.html`; PROGRESS.md has live st
 The original FRAX nominal torque equations/gains remain in use, CBFpy performs
 filtering, and all three upstream repositories remain read-only.
 
+New camera boundary (D20, software only): `camera_io.py` supplies typed metric
+frames, optical intrinsics/projection, explicit capture-time calibration and
+hash-checked recording/replay. `realsense_camera.py` is an optional lazy SDK
+adapter, mock-tested but never connected to a device or installed on this host.
+`FrameGeometry` accepts a separate mask/identity provider and reuses the existing
+fitter/candidate generator. Missing masks/calibration do not authorize omission.
+`CameraWorker` prepares observations off the consumer thread; the optional
+`PerceivedPickupRuntime` external-source path consumes finished geometry through
+the existing admission gate. Native GL/live MjData is not shared across threads.
+The original synchronous simulation path stays available for old behavior.
+Robot pose/clock mapping, physical hand–eye calibration, SDK host compatibility,
+hardware synchronization and learned segmentation still need later validation.
+See README's camera section for commands/contracts and PROGRESS for evidence.
+
 The prior corrected replication has 72 runs on the same 12 static layouts used
 in the original held-out study. Safe pickups: off 11/12; all-on 12/12; geometric
 rule 12/12; all-objects/Jev-geometry 6/12; Jev once 6/12; Jev repeated 12/12.
@@ -273,6 +287,11 @@ have a background worker. This is logical separation, not a claim that sensor
 I/O cannot delay a control step. Moving acquisition to a separately owned native
 rendering/sensor worker is a future measured-performance change, not implemented
 hard-real-time isolation or active viewpoint planning.
+That paragraph describes the retained legacy simulation path. D20 adds a separate
+source-owned camera worker for replay/SDK input and a simulation consumer that
+does not perform acquisition, fitting, candidate generation or raw camera logging
+inside control. Fake stalled sources test the nonblocking boundary; this is not
+real-time certification or validation of a live physical-camera/robot loop.
 
 Prefer ordinary functions and small data records. Add abstractions only when an
 actual substitution or maintenance need justifies them. The layout below is one
@@ -1025,6 +1044,8 @@ The current reusable implementation is deliberately small:
 | `api_budget.py` | Persistent dollar-cap reservations and reported-usage estimates around the existing Jev SDK. |
 | `analyze_pickup.py` / `pickup_gallery.py` | Independent native audits, geometry costs, CPU profiling, recorded-answer diagnosis, and synchronized pickup review. |
 | `perception.py` | Calibrated simulated RGB/depth, oracle-instance segmentation, depth-only clutter fits and accepted measurement updates; known target/robot retained. |
+| `camera_io.py` / `realsense_camera.py` | Shared metric frames, explicit calibration, portable replay and worker I/O; optional SDK adapter tested with doubles only, not connected hardware. |
+| `inspect_camera.py` | Offline RGB/depth/mask/geometry inspection and a separate unverified camera-only live entry point; no robot commands. |
 | `pickup_layouts.py` / `study_pickup.py` | Geometry-qualified fixtures and frozen count/context, unseen-layout and camera/fault studies using the existing runner. |
 
 This is infrastructure exercised by static pickup and earlier reaching fixtures, not a finished

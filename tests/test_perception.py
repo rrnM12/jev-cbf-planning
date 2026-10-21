@@ -62,3 +62,68 @@ class PerceptionTests(unittest.TestCase):
             self.assertNotIn('observation_config',visible)
             self.assertNotIn('calibration_bias_m',visible)
             self.assertIn('geometry_age_s_by_object',visible['observation_summary'])
+
+    def test_common_simulator_frame_projection_matches_legacy_and_worker_drives_sim_filter(self):
+        from camera_io import CameraWorker,FrameRecorder,ReplaySource,deproject,robot_transform
+        from perception import FrameGeometry,RGBD,PerceivedPickupRuntime
+        from pickup import DEFAULTS,pickup_request,PickupRuntime
+        from inspect_selection import ROOT
+        from run_static import load_upstream,run_case
+        from run_suite import read
+        from unittest.mock import patch
+        demo,utils=load_upstream(ROOT.parent/'frax',ROOT.parent/'cbfpy');robot=demo.load_panda();mj=utils.mujoco
+        scene=deepcopy(read(ROOT/'examples/pickup_scenes.json')['scenes'][0])
+        template=read(ROOT/'prompts/pickup_terminal.json');options=dict(shape_aware=True,counts=(1,2,3,4,5,6,8))
+        seed=pickup_request(scene,DEFAULTS,robot,template,**options)
+        with tempfile.TemporaryDirectory() as temp:
+            folder=Path(temp);builder=PickupRuntime(scene,DEFAULTS,seed,None,'off',folder/'unused')
+            spec=builder.scene_spec(mj,ROOT.parent/'frax',seed['state'],[],[])
+            from perception import add_cameras
+            arm=builder.robot_spec(mj,ROOT.parent/'frax');add_cameras(spec,arm)
+            spec.attach(arm,prefix='',frame=spec.worldbody.add_frame())
+            model=spec.compile();data=mj.MjData(model);data.qpos[:7]=robot.default_configuration;data.qpos[7:9]=.04;mj.mj_forward(model,data)
+            sensor=RGBD(mj,model,[o['id'] for o in scene['objects']],width=160,height=120)
+            try:records=sensor.capture_frames(data,cameras=('scene_camera',))
+            finally:sensor.close()
+            f,masks,entry=records[0];matrix=robot_transform(f,{f.camera_id:entry})
+            common=deproject(f)@matrix[:3,:3].T+matrix[:3,3]
+            camera=model.camera(f.camera_id).id
+            legacy=backproject(f.depth_m,data.cam_xpos[camera],data.cam_xmat[camera],model.cam_fovy[camera])
+            np.testing.assert_allclose(common,legacy,rtol=1e-12,atol=1e-10)
+            recorder=FrameRecorder(folder/'recording');recorder.write(f,masks,identity_source='ORACLE simulator masks')
+            geometry=FrameGeometry({f.camera_id:entry},lambda f,s:s.annotations(f),support_z=0.,
+                                   excluded_ids=[scene['target_id']],expected_ids=['bottle_a','box_b'])
+            worker=CameraWorker(lambda:ReplaySource(folder/'recording'),geometry).start();worker.thread.join(5.)
+            self.assertFalse(worker.thread.is_alive());self.assertEqual(worker.health()['status'],'eof')
+            snapshot=worker.latest().value;self.assertEqual(snapshot['status'],'ready')
+            observed=deepcopy(scene);observed['objects']=[scene['objects'][0],*snapshot['estimated_objects']]
+            request=pickup_request(observed,DEFAULTS,robot,template,**options)
+            runtime=PerceivedPickupRuntime(scene,DEFAULTS,request,None,'all_fine',folder/'run',observation_source=worker)
+            with (patch.object(runtime,'observe',side_effect=AssertionError('synchronous camera call in external control path')),
+                  patch('perception.observed_candidates',side_effect=AssertionError('candidate generation in control path'))):
+                result,trace=run_case(demo,utils,{'request':request},'off',frax_dir=ROOT.parent/'frax',steps=4,
+                                      runtime=runtime,scene_guard=.05,control_dt=.002)
+            self.assertTrue(result['complete']);self.assertGreaterEqual(trace['scene_h2_m'].min(),0.)
+            self.assertEqual(runtime.observation_events[0]['status'],'accepted')
+            self.assertFalse(hasattr(runtime,'sensor'))
+            self.assertEqual(int(runtime.env.model.geom('scene/bottle_a').type[0]),int(mj.mjtGeom.mjGEOM_CYLINDER))
+            self.assertIn('external',result['perception_scope'])
+            worker.close()
+
+    def test_frame_geometry_missing_masks_calibration_and_freshness_are_explicit(self):
+        from camera_io import CameraFrame,Intrinsics
+        from perception import FrameGeometry
+        f=CameraFrame('scene',0,0.,'synthetic',np.zeros((4,4,3),dtype=np.uint8),np.ones((4,4)),
+                      Intrinsics(4,4,4.,4.,1.5,1.5),'scene/optical')
+        entry=dict(mount='fixed',optical_frame=f.optical_frame,calibration_id='SYNTHETIC',T_robot_optical=np.eye(4))
+        geometry=FrameGeometry({'scene':entry},None,support_z=0.)
+        with self.assertRaisesRegex(ValueError,'masks'):geometry(f)
+        geometry.mask_provider=lambda f,s:({'box':np.ones((4,4),dtype=bool)},'SYNTHETIC masks')
+        first=geometry(f);self.assertEqual(first['status'],'ready')
+        geometry.mask_provider=lambda f,s:({'box':np.zeros((4,4),dtype=bool)},'SYNTHETIC missing mask')
+        from dataclasses import replace
+        second=geometry(replace(f,frame_number=1,capture_time_s=1.))
+        self.assertEqual(second['views']['scene']['seen']['box']['capture_time_s'],0.)
+        self.assertEqual(first['views']['scene']['seen']['box']['capture_time_s'],0.)
+        geometry.calibration={}
+        with self.assertRaisesRegex(ValueError,'calibration'):geometry(f)
