@@ -39,11 +39,12 @@ Machine-readable handoff: `artifacts/pickup/handoff_checks_v1.json`.
 114 new logical SDK invocations in this approved package: estimated public-price
 token cost $0.067044516; conservative reservations $0.941359104, below $7.50.
 Ledger: `artifacts/usage/pickup_research_v1.json`. No further automatic queries
-or experiments are needed. Nihar requested publication on 21 October (D17);
-the source/test/fixture/documentation checkpoint is being verified for commit
-and push. Credentials, environments, caches and generated evidence stay local;
-upstreams remain read-only. This completes the software package, not the full
-research system or hardware/perception deployment.
+or experiments are needed. At Nihar's request (D17), source/test/fixture/
+documentation checkpoint `dc566c7` was committed and pushed successfully to
+`origin/main` on 21 October. All 89 tests passed again before publication.
+Credentials, environments, caches and generated evidence stay local; upstreams
+remain read-only. This completes the software package, not the full research
+system or hardware/perception deployment.
 
 Main finding: continual selection fixes coarse initial representations, but the
 simple rule is stronger than Jev here on enabled count and scene-union excess
@@ -1100,11 +1101,20 @@ Decide relevant questions with Nihar when the corresponding step is chosen.
   28.474 s, with no live API calls. Fetched origin; local/remote main initially
   match at `f432eef`. Preparing the source/test/fixture/documentation publication;
   credentials, environments, caches and generated evidence remain local/ignored.
+- 21 October 2026: committed and pushed source checkpoint `dc566c7`
+  (`dc566c719057ca931472eb75ca6ea9fb92b1b418`) to
+  `https://github.com/rrnM12/jev-cbf-planning` on `main`. Push succeeded from
+  `f432eef` without a force push. The 44-file change includes simulation/selection
+  adapters, pickup/analysis/viewing tools, tests, editable scenes/templates and
+  docs. Scanned all 53 indexed files for the configured key and private-key/
+  GitHub-token patterns; none found. No artifacts, credentials, caches or
+  environments were included. All three upstream worktrees remain clean;
+  `git diff --cached --check` passed. No new API calls; budget ledger unchanged.
 
 The completed viewer checkpoint is published. Subsequent static/dynamic reaching
-infrastructure and the current pickup/follow-on package are complete, and Nihar
-has requested their publication. The last verified published checkpoint is
-`f432eef` until the new push is confirmed. The current local review entry is
-`artifacts/pickup/review/index.html`; generated gallery files are not in Git.
+infrastructure and the current pickup/follow-on source package are now published
+in checkpoint `dc566c7`, followed by this publication record. The current local
+review entry is `artifacts/pickup/review/index.html`; generated gallery files are
+not in Git and are not automatically available in a fresh clone.
 The deleted stale parent architecture copy remains recoverable from the
 repository's original commit `b347afe`.

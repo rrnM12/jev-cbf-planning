@@ -54,6 +54,8 @@ implementation checklist. Follow the user's latest directions if they differ.
   completed source/test/fixture/documentation checkpoint to the existing Jev repo.
   Keep credentials, environments, caches and generated experiment/gallery artifacts
   local/ignored. This publication request does not authorize another experiment.
+  Source checkpoint `dc566c7` was pushed successfully to `origin/main`; see
+  PROGRESS.md for publication verification. Generated review galleries remain local.
 - Completed authorization (superseded the older checkpoint stop points below):
   Nihar asked to continue autonomously through diagnosis, fixes, continual
   constraint updates, verification, and the final simulation showcase, without

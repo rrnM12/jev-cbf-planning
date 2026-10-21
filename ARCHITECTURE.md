@@ -14,8 +14,9 @@ simple rule on this oracle-geometry set. Mean enabled pairs are 156.94 repeated
 versus 296 all-on and 151.71 rule; allocated scene pairs remain 348. Native
 re-evaluation checks every object and all 23 robot collision geoms. The original
 results/failures are preserved separately; this replication is not new unseen
-evidence. 89 offline tests pass. Nihar requested source/documentation publication
-on 21 October; generated evidence stays local. No hardware deployment.
+evidence. 89 offline tests pass. Source/documentation checkpoint `dc566c7` was
+published on 21 October at Nihar's request; generated evidence stays local.
+No hardware deployment.
 
 Current adapters include native articulated fingers, a free-body pickup target,
 explicit task-contact masks, runtime sphere parameters, asynchronous recorded
