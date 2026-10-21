@@ -1,7 +1,71 @@
 # Jev-selected CBFs: evolving architecture and working plan
 
 Status: a living research plan, not a frozen implementation specification.
-Updated 20 October 2026. The first-checkpoint launcher and environment are in place;
+Updated 21 October 2026. The four-item pickup gallery and approved follow-on
+software study are implemented. Start at `artifacts/pickup/review/index.html`.
+The original FRAX nominal torque equations/gains remain in use, CBFpy performs
+filtering, and all three upstream repositories remain read-only.
+
+The latest corrected replication has 72 runs on the same 12 static layouts used
+in the original held-out study. Safe pickups: off 11/12; all-on 12/12; geometric
+rule 12/12; all-objects/Jev-geometry 6/12; Jev once 6/12; Jev repeated 12/12.
+Repeated querying resolves coarse-cover stalls, but does not outperform the
+simple rule on this oracle-geometry set. Mean enabled pairs are 156.94 repeated
+versus 296 all-on and 151.71 rule; allocated scene pairs remain 348. Native
+re-evaluation checks every object and all 23 robot collision geoms. The original
+results/failures are preserved separately; this replication is not new unseen
+evidence. 89 offline tests pass. Nihar requested source/documentation publication
+on 21 October; generated evidence stays local. No hardware deployment.
+
+Current adapters include native articulated fingers, a free-body pickup target,
+explicit task-contact masks, runtime sphere parameters, asynchronous recorded
+Jev proposals, admission checks, independent collision/lift diagnostics, and
+synchronized playback. A pregrasp alignment/settling waypoint, lateral backoff,
+and bilateral-contact gate improve the task sequence without replacing the arm
+controller. Numeric settings in `pickup.DEFAULTS` are provisional, not research
+or hardware requirements. Shape-aware cylinder slabs and a box grid supplement
+the original box-split sphere candidates; all use conservative cell enclosures.
+
+`frax_gripper` splits native finger inertia out of the FRAX aggregate at a 2 cm
+reference opening. The seven-DOF CBF dynamics omit finger/contact/payload forces;
+the 0.05 m/s² scene-inequality guard is empirical, not calibrated uncertainty.
+Target masks protect 16 arm spheres while permitting tool overlap; native
+evaluation still rejects non-finger contact. Finger envelopes assume nominal
+0–4 cm travel, and native soft-limit overshoot is reported. No perception,
+learned policy, global planner, learned body pairing, frontier-model comparison,
+formal contact/continuous-time safety, or real-time certification is claimed.
+
+The completed work used 114 new logical Jev requests, estimated token cost
+$0.067044516, with $0.941359104 conservatively reserved against the $7.50 cap.
+PROGRESS.md records decisions, attempts, failed drafts, corrections and checks.
+The larger research system/dream desiderata are not finished by this software
+proof of concept; future choices below remain replaceable proposals.
+
+Historical dynamic infrastructure: `artifacts/showcase/dynamic_v1/index.html`
+contains the earlier moving-object reaching check, not the current task family.
+Its `frax` profile has rigid fingers, unlike the articulated pickup profile.
+
+### Current task direction: static-clutter pickup
+
+User clarification, 21 October: use one task family only. The arm/gripper maneuvers
+through static clutter, picks up the designated object, and stops once pickup is
+verified. Vary clutter layouts and target positions within that same task. Do not
+add placement, transport, pushing, or moving-obstacle tasks. The target itself may
+move during pickup; surrounding obstacles remain static. Older task alternatives
+below are historical possibilities, not the current scope.
+
+The older reaching showcase does not implement this task; the new pickup workflow
+does, using a functional simulated gripper, a graspable target, and explicit
+handling of intended gripper-target contact while retaining other protections. Reuse the
+existing upstream controller and local selection/CBF/viewing infrastructure where
+applicable. Repeated selection responds to arm configuration and task progress
+even though clutter is stationary; its benefit beyond a geometric rule remains
+an open research question despite the observed one-shot/repeated difference.
+The moving-object fixtures remain historical infrastructure checks, not the next
+benchmark. Future contact/success changes should follow evidence rather than an
+arbitrary predetermined protocol; preserve the old data when making corrections.
+
+Earlier checkpoints (historical evidence): the launcher/environment are in place;
 the original Panda demo passes a bounded 1,000-step run with finite states/torques
 and positive sampled model barriers. The baseline execution checkpoint and agent
 network/GUI workflow are verified. Nihar approved the next isolated sphere-cover
@@ -13,9 +77,28 @@ with valid proposals; uncertain cube geometry is a check-in topic, not an optima
 or safety result. Nihar approved a scene viewer of that saved result: implemented,
 39 offline tests pass, and bounded oblique/top-down launches exit normally. Nihar
 visually reviewed the new viewer and said "looks good"; this checkpoint is complete.
-No selection controls the robot. Interactive robot
-stress tests and independent safety evaluation remain unverified.
-The full Jev framework is not built. See [PROGRESS.md](PROGRESS.md)
+Nihar then approved a static Panda integration/comparison through a review gallery.
+Saved proxy answers now drive simulation-only obstacle constraints via the unchanged
+FRAX controller/config and CBFpy. Off/all/replay runs each completed six simulated
+seconds with about 1.4 mm final error, no sampled object penetration, and 0/210/168
+scene constraint pairs. This is proxy-decision replay with a changed start/body
+context, not a fresh whole-arm Jev decision. Off also worked, so this scene does not
+demonstrate a safety advantage. Independent sampled MuJoCo collision checks and a
+rendered replay gallery are available. Nihar reviewed all animations and said they
+look good and normal; this static checkpoint is complete.
+The next approved checkpoint is now implemented: reusable actual-Panda request
+features, a phased static-suite runner, and a combined review gallery. Six frozen
+scene variations produced six fresh Jev responses and 18 physical rollouts.
+Jev reduces scene constraint pairs by 33–75% relative to fixed-four all-on and
+has no sampled native contacts, but does not improve completion: both succeed
+in two of six cases. Four constrained cases have negative modeled scene barriers
+and stop short; a read-only probe also observes model/simulator acceleration
+mismatch. These limitations require review, not silent controller retuning.
+The review gallery is `artifacts/suite/panda_static_v2/index.html`; 58 tests pass.
+Nihar accepted the visual-review checkpoint ("yes it looks good"). This does not
+resolve the barrier/dynamics issues or authorize a new experiment automatically.
+That earlier stop was superseded by Nihar's explicit autonomous-showcase request.
+Online simulation is now implemented as described above. See [PROGRESS.md](PROGRESS.md)
 for current results, blockers, and the decision log, and [AGENTS.md](AGENTS.md) for
 repository working rules. Future directions below are not automatic implementation
 instructions or approval for hardware deployment.
@@ -300,8 +383,9 @@ the proposed implementation.
 
 The approved isolated geometry checkpoint now implements box-section sphere
 covers with 1/2/4 sections and numeric/visual inspection tools; see README and
-PROGRESS for commands, observed excess volumes, and validation limits. No covers
-are connected to the controller yet. The broader family below remains provisional:
+PROGRESS for commands, observed excess volumes, and validation limits. Saved sphere
+covers are now connected in the approved static Panda replay experiment only.
+The broader family below remains provisional:
 
 1. One sphere enclosing the object-local bounding box.
 2. Two spheres enclosing two equal box sections along its longest axis.
@@ -790,9 +874,11 @@ These choices were subsequently implemented and the bounded baseline run verifie
 see PROGRESS.md for evidence and limits. Nihar then approved isolated sphere-cover
 generation, coverage/excess-space checks, and inspectable visualizations. After
 reviewing both screenshots, Nihar approved the tiny standalone text-only Jev
-experiment. This includes a preview and SDK adapter, not connection of new
-constraints to the controller. The first live request has succeeded; review the
-actual choices and uncertainty before choosing the next step.
+experiment, followed by visual review and a static simulation comparison. Saved
+proxy-selected sphere covers are now integrated through the original controller
+without new model calls. This does not establish the selections' validity for the
+whole arm. Nihar's visual review of the comparison gallery is complete; the next
+research experiment still needs agreement.
 
 ### Questions to revisit only when relevant
 
@@ -862,12 +948,39 @@ evidence. It might be inspecting primitive coverage, examining Jev decisions on
 a tiny scene, changing an interface, or resolving a compatibility issue. This is
 not a mandatory sequence, and later tasks may change after each result.
 
-Current check-in: baseline and isolated sphere-cover review are complete. Nihar
-chose a tiny standalone Jev experiment next. Its synthetic scene uses a swept
-end-effector sphere proxy (not the FRAX arm), with editable questions and no
-authorized object contact. The preview/SDK adapter, offline tests, and first live
-response are available. Review the ambiguous cube geometry choice before deciding
-on prompt comparisons, task variations, or controller integration.
+Current handoff: the static-clutter pickup gallery and approved follow-on software
+study are complete locally. Open `artifacts/pickup/review/index.html`. Six methods
+are compared on 12 layouts, with original failures and the corrected replication
+kept separate. Repeated Jev achieves 12/12 safe pickups versus 6/12 once; all-on
+and the geometric rule also achieve 12/12. The rule has lower geometric costs, so
+this does not establish Jev superiority. All 72 corrected trajectories pass the
+independent native audit; 89 offline tests pass. The completed package used 114
+logical requests, with estimated token cost $0.067044516 under the $7.50 cap.
+Final link, playback, credential, source-archive and no-new-call resume checks
+passed. No further experiment is running. Future research choices and publication
+follow the next user direction; hardware and perception are not implemented.
+
+The current reusable implementation is deliberately small:
+
+| Module | Responsibility |
+| --- | --- |
+| `inspect_selection.py` | Shared candidate requests, official SDK adapter, and response validation. |
+| `robot_selection.py` | Ground-truth Panda state and measured nominal-motion features; replaceable later by other input providers. |
+| `run_static.py` | Scoped adapter around the original FRAX demo/controller/CBFpy, recorded states, and independent diagnostics. |
+| `run_suite.py` | Prepare inputs, run baselines, record one-shot selections, evaluate, and aggregate saved runs. |
+| `static_gallery.py` | Render recorded trajectories and decisions without another model call or physics rollout. |
+| `sim_model.py` | Explicit upstream/idealized matched plant profiles and independent native dynamics comparison. |
+| `runtime_cbf.py` | Reuse FRAX/CBFpy with runtime sphere arrays, masks, time/velocity terms, and a sampled-control inequality guard. |
+| `online.py` | Ground-truth snapshots, saved background requests, admissible policy installation, and control-loop hooks. |
+| `run_showcase.py` / `showcase_gallery.py` | Frozen dynamic fixtures, off/all/once/repeated runs, independent audits, and synchronized recorded playback. |
+| `pickup.py` | Native gripper/free-target task sequence, task-defined contact masks, current-state features, and pickup verification around the original arm controller. |
+| `run_pickup.py` | Frozen static pickup experiments, source snapshots, six-method comparisons, safe completed-run resume, and layout preparation. |
+| `api_budget.py` | Persistent dollar-cap reservations and reported-usage estimates around the existing Jev SDK. |
+| `analyze_pickup.py` / `pickup_gallery.py` | Independent native audits, geometry costs, CPU profiling, recorded-answer diagnosis, and synchronized pickup review. |
+
+This is infrastructure exercised by static pickup and earlier reaching fixtures, not a finished
+perception-driven robot architecture. Editable scene/question JSON and ordinary function boundaries are
+the substitution points; no speculative plugin framework is required.
 
 When selection work begins, start with inspectable examples and easily editable
 questions/orchestration. Review its outputs before committing to a taxonomy,
@@ -888,7 +1001,8 @@ the mismatch and options rather than silently editing the dependency.
 For each agreed step, keep its code, relevant settings, a short usage explanation,
 and the evidence/status needed for review. Apply Section 11's checks as their
 features are introduced, not as a demand to implement the final system first.
-Environment setup, the baseline, isolated geometry, and tiny standalone selection
-experiment are authorized. Hardware, continuous querying, controller deployment,
-and unselected later features remain outside that scope. Report actual results
-and blockers in PROGRESS.md.
+Nihar's latest authorization included the four pickup items and seven follow-on
+items, with autonomous diagnosis/fixes and up to $7.50 total new Jev usage. That
+software package is complete. Hardware, perception, external publication, and
+unselected research extensions remain outside that scope. Report actual results
+in PROGRESS.md; preserve failures rather than silently replacing old evidence.

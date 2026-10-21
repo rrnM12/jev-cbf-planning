@@ -1,0 +1,13 @@
+{
+  "role": {
+    "instructions": "For object {object_id}, choose whether its avoidance constraints are useful for completing the current static-clutter pickup task. Prioritize current/near-future collision risk for the whole arm/gripper, not just semantic category. Treat the designated target as intended finger interaction, not permission for arm/palm contact. The fixed task contact policy independently protects the arm from the target; role/geometry choices here chiefly control clutter constraints. Distant or irrelevant clutter need not stay constrained forever. Use the task phase, measured geometry and the explicitly heuristic forecast; these features are not guarantees. Return review if you cannot make a supported choice.",
+    "criteria": {
+      "avoid": "Keep this object represented as a collision obstacle because it presents relevant collision risk during the current task/phase.",
+      "omit": "No additional whole-tool keep-out is needed now: it is irrelevant to current/near-future motion, or it is the designated grasp target with intended finger contact governed separately.",
+      "review": "Insufficient or conflicting context: retain the existing constraint choice pending a later decision."
+    }
+  },
+  "geometry": {
+    "instructions": "For object {object_id}, choose one candidate ID if avoidance is needed. Every supplied union conservatively covers the full known object bound. Favor sufficient collision protection with little unnecessary obstruction near intended motion, then avoid needless primitive/constraint count. More spheres are not automatically tighter or cheaper. Geometry choice is conditional even if the object's role is omit or review."
+  }
+}

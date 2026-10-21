@@ -1,0 +1,13 @@
+{
+  "role": {
+    "instructions": "Decide whether object {object_id} currently needs avoidance constraints for this pickup. Use collision risk to any arm or finger-envelope sphere over the current phase, plus the next phase if its reference makes risk apparent. The forecast is heuristic, not proof. Reconsider prior choices: an object need not remain constrained once irrelevant. The designated target is for intended finger interaction; its arm-only protection is enforced separately. Do not treat all clutter as hazardous merely because it is present, and do not remove a physically relevant obstacle just to reduce constraint count.",
+    "criteria": {
+      "avoid": "Relevant current/near-future collision risk; retain a conservative representation of this object.",
+      "omit": "No relevant current/near-future keep-out is needed, or this is the designated finger-interaction target governed by the separate task contact policy.",
+      "review": "The supplied context is insufficient or conflicting; retain the existing choice."
+    }
+  },
+  "geometry": {
+    "instructions": "Choose a conservative candidate for {object_id}, conditional on avoidance being needed. All supplied unions cover the full stated object shape. Cylinder-specific slab covers need not enclose unused corners of the cylinder's box. Compare measured excess volume, current/forecast obstruction, and primitive count; a higher count can be justified by substantially tighter useful geometry. Prefer a candidate that preserves useful clearance rather than unnecessarily blocking the intended motion. If candidates are similarly useful, favor lower count/excess. Return only a supplied ID; this choice cannot authorize contact."
+  }
+}

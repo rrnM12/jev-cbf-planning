@@ -12,7 +12,7 @@ import xml.etree.ElementTree as ET
 import numpy as np
 
 from inspect_geometry import show_scene
-from inspect_selection import ROOT, decode_response
+from inspect_selection import ROOT, scene_motion, validate_selection
 
 
 def _numbers(values):
@@ -33,17 +33,12 @@ def selection_scene(report):
     The table is a display-only Z=0 reference. All contacts are disabled. A path
     capsule has the proxy's actual radius; the thinner centreline is just ink.
     """
-    if report.get("error") or report.get("validation_error") or "response" not in report:
-        raise ValueError("need a successful saved selection response, not a preview or failed run")
+    proposals = validate_selection(report)
     request, response = report["request"], report["response"]
-    proposals = decode_response(request, response)
-    if "proposals" in report and report["proposals"] != proposals:
-        raise ValueError("cached proposals disagree with the saved model answers")
     state = request["state"]
-    proxy = state["robot_proxy"]
-    start = _vector(proxy["start_m"], "start_m")
-    goal = _vector(proxy["goal_m"], "goal_m")
-    radius = float(proxy["radius_m"])
+    start, goal = scene_motion(state)
+    robot_aware = "robot_context" in state
+    radius = .015 if robot_aware else float(state["robot_proxy"]["radius_m"])
     if not np.isfinite(radius) or radius <= 0:
         raise ValueError("proxy radius must be finite and positive")
 
@@ -102,8 +97,8 @@ def selection_scene(report):
     ):
         ET.SubElement(world, "geom", name=f"proxy/{name}", type="sphere", pos=_numbers(position),
                       size=str(radius), rgba=color, group="3")
-        labels.append((f"{name} proxy", position + [0, 0, radius + 0.025]))
-    if np.linalg.norm(goal - start) > 0:
+        labels.append((f"{name} EE marker" if robot_aware else f"{name} proxy", position + [0, 0, radius + 0.025]))
+    if not robot_aware and np.linalg.norm(goal - start) > 0:
         for name, width, color in (
             ("sweep", radius, "0.15 0.80 1 0.12"),
             ("centerline", radius * 0.10, "0.15 0.80 1 1"),
@@ -120,8 +115,8 @@ def selection_scene(report):
         f"SAVED PROPOSAL ONLY - no physics or controller\n"
         f"Source: {report.get('mode', 'unspecified')} / {response['model']}\n"
         "Grey: objects | Orange: selected covers\n"
-        "Cyan: nominal sweep | Blue: start | Purple: goal\n"
-        "Overlap is possible: the nominal path is NOT filtered.\n"
+        + ("Blue/purple: display-only EE start/goal markers, not robot spheres\n" if robot_aware else "Cyan: nominal sweep | Blue: start | Purple: goal\n")
+        + "Overlap is possible: the nominal path is NOT filtered.\n"
         + "\n".join(summary)
     )
     return {

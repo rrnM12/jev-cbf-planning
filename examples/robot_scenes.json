@@ -1,0 +1,61 @@
+{
+  "description": "Six pre-model variations of one static, no-contact Panda reaching task; oracle axis-aligned geometry, not perception. Scene IDs/titles are reporting labels and are not passed as model hints.",
+  "steps": 3000,
+  "goal_m": [0.60, 0.0, 0.06],
+  "all_geometry": "box-split-4",
+  "scenes": [
+    {
+      "id": "clear_path",
+      "title": "Clear-path control",
+      "objects": [
+        {"id": "object_a", "shape": "cylinder", "size_m": [0.07, 0.07, 0.30], "center_m": [0.30, 0.09, 0.15]},
+        {"id": "object_b", "shape": "box", "size_m": [0.08, 0.08, 0.08], "center_m": [0.44, -0.06, 0.04]},
+        {"id": "object_c", "shape": "box", "size_m": [0.08, 0.08, 0.08], "center_m": [0.25, 0.45, 0.04]}
+      ]
+    },
+    {
+      "id": "hand_path",
+      "title": "Object near the approaching hand",
+      "objects": [
+        {"id": "object_a", "shape": "box", "size_m": [0.08, 0.08, 0.20], "center_m": [0.52, -0.08, 0.10]},
+        {"id": "object_b", "shape": "box", "size_m": [0.08, 0.08, 0.08], "center_m": [0.25, 0.45, 0.04]}
+      ]
+    },
+    {
+      "id": "arm_clutter",
+      "title": "Tall clutter near the moving arm",
+      "objects": [
+        {"id": "object_a", "shape": "cylinder", "size_m": [0.06, 0.06, 0.60], "center_m": [0.54, -0.12, 0.30]},
+        {"id": "object_b", "shape": "box", "size_m": [0.08, 0.08, 0.08], "center_m": [0.25, -0.40, 0.04]}
+      ]
+    },
+    {
+      "id": "distractors",
+      "title": "Near-hand object plus distant clutter",
+      "objects": [
+        {"id": "object_a", "shape": "box", "size_m": [0.08, 0.08, 0.20], "center_m": [0.52, -0.08, 0.10]},
+        {"id": "object_b", "shape": "box", "size_m": [0.08, 0.08, 0.08], "center_m": [0.25, 0.45, 0.04]},
+        {"id": "object_c", "shape": "cylinder", "size_m": [0.06, 0.06, 0.16], "center_m": [0.65, 0.40, 0.08]},
+        {"id": "object_d", "shape": "box", "size_m": [0.08, 0.08, 0.08], "center_m": [0.25, -0.40, 0.04]}
+      ]
+    },
+    {
+      "id": "tight_passage",
+      "title": "Two-sided approach and conservative covers",
+      "objects": [
+        {"id": "object_a", "shape": "cylinder", "size_m": [0.08, 0.08, 0.30], "center_m": [0.42, -0.14, 0.15]},
+        {"id": "object_b", "shape": "cylinder", "size_m": [0.08, 0.08, 0.30], "center_m": [0.42, 0.14, 0.15]},
+        {"id": "object_c", "shape": "box", "size_m": [0.08, 0.08, 0.08], "center_m": [0.25, 0.45, 0.04]}
+      ]
+    },
+    {
+      "id": "shape_tradeoff",
+      "title": "Elongated and compact object representations",
+      "objects": [
+        {"id": "object_a", "shape": "box", "size_m": [0.24, 0.04, 0.04], "center_m": [0.50, 0.05, 0.02]},
+        {"id": "object_b", "shape": "box", "size_m": [0.08, 0.08, 0.08], "center_m": [0.38, -0.16, 0.04]},
+        {"id": "object_c", "shape": "box", "size_m": [0.08, 0.08, 0.08], "center_m": [0.25, 0.45, 0.04]}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "role": {
+    "instructions": "For object {object_id}, should the actual Panda arm avoid it during this free-space reaching task? Use the supplied ground-truth geometry and measured whole-arm nominal-motion risk, not object category. Nominal motion is predicted with scene contact forces disabled; it is not a safe trajectory. Object-level native collision distances include gripper/base; candidate clearances use the controller's 21 moving-link spheres and may conservatively block empty space. Positive nominal clearance is not a guarantee for a modified motion. No object interaction is authorized. Robot joint/floor/self/singularity protections cannot be removed. Choose review if the information does not support a decision; model confidence is not a safety guarantee.",
+    "criteria": {
+      "avoid": "Include this object in scene avoidance constraints because collision risk for this robot motion warrants it.",
+      "omit": "Omit scene avoidance constraints for this object because it is sufficiently irrelevant to this specific motion. No object contact is authorized.",
+      "review": "Information or model limitations are too ambiguous to commit to avoidance or omission."
+    }
+  },
+  "geometry": {
+    "instructions": "Assuming object {object_id} needs avoidance, select one supplied candidate ID. Every candidate's sphere union covers the known bounding box. Prefer an initially admissible cover (nonnegative initial_robot_sphere_clearance_m); a negative value cannot initialize the controller's safe set. Consider nominal-path and predicted-end clearances, unnecessary blocked space, estimated excess union volume, and total robot/primitive constraint pairs. A negative nominal cover clearance may represent a real obstacle or conservative excess; do not drop real obstacles just to clear the path. The nominal controller is not a path planner and can stall. More spheres are not always a tighter cover. This conditional question is independent of the role answer, which is not available here."
+  }
+}

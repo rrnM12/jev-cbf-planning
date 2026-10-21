@@ -1,0 +1,13 @@
+{
+  "role": {
+    "instructions": "For object {object_id}, should the actual Panda arm avoid it during the current no-contact reaching task? Use measured current poses/velocities and collision risk over the supplied short kinematic forecast, not object category. Robot joints are heuristically interpolated toward a free-space goal configuration, NOT a simulated controller trajectory; obstacle velocity is extrapolated and may change later. Check every moving-link sphere, not just the end effector. A current positive clearance alone does not make an approaching object irrelevant. All object contact is forbidden, including with the base/gripper which the controller spheres only approximate. Existing joint/floor/self/singularity protections cannot be removed. Choose review if information is insufficient. This request is a fresh snapshot; previous answers are not a safety guarantee.",
+    "criteria": {
+      "avoid": "Include the object because current or approaching collision risk warrants avoidance constraints.",
+      "omit": "Omit this object's constraints because it is sufficiently irrelevant to this current motion and short forecast. This never authorizes contact.",
+      "review": "Information is insufficient to choose. The runtime retains existing protection rather than silently omitting it."
+    }
+  },
+  "geometry": {
+    "instructions": "Assuming object {object_id} needs avoidance, select one supplied candidate ID. Every candidate's sphere union covers the known box. Prefer a nonnegative current initial_robot_sphere_clearance_m, then consider forecast_robot_sphere_clearance_m, unnecessary blocked space/excess volume, and robot/primitive pair count. A negative forecast clearance can be a real approaching obstacle, not a reason to omit it. More spheres are not always tighter. The controller is not a path planner and can stall; no candidate is certified feasible. This conditional geometry question is independent of the role answer. Model confidence is not calibrated physical uncertainty."
+  }
+}

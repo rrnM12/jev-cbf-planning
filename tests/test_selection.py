@@ -152,6 +152,16 @@ class ResponseTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 selection.decode_response(self.request, invalid)
 
+    def test_provider_rounded_probability_mass_is_not_a_model_failure(self):
+        for values in ((.33,.33,.33),(.34,.34,.33)):
+            response = fake_response(self.request)
+            answer = response["answers"]["geometry/bottle"]
+            answer["probabilities"] = dict(zip(answer["probabilities"],values,strict=True))
+            before = deepcopy(response)
+            proposals = selection.decode_response(self.request,response)
+            self.assertEqual(proposals[0]["candidate_id"],"box-split-1")
+            self.assertEqual(response,before)  # No renormalization/fabrication.
+
 
 class CliTests(unittest.TestCase):
     def test_default_preview_never_calls_model_and_records_no_fake_answers(self):

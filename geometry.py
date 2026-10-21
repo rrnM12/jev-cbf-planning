@@ -76,6 +76,42 @@ def make_sphere_covers(half_extents_m, counts=(1, 2, 4)) -> tuple[SphereCover, .
     return tuple(candidates)
 
 
+def make_shape_covers(half_extents_m, *, shape, counts=(1, 2, 4)):
+    """Add shape-aware alternatives without removing the original box covers.
+
+    Cylinder slabs use the exact circular cross-section, rather than its square
+    bound. A four-cell box grid splits the two longest axes (split_axis=-1).
+    Each cell/slab is enclosed, so the union contains the entire stated shape.
+    These are deterministic candidates, not model choices or perception fitting.
+    """
+    half = _half_extents(half_extents_m)
+    counts = tuple(counts)
+    covers = list(make_sphere_covers(half, counts))
+    if shape == "cylinder":
+        if half[0] != half[1]:
+            raise ValueError("circular cylinder requires equal X/Y dimensions")
+        for count in counts:
+            edges = np.linspace(-half[2], half[2], count+1)
+            z = edges[:-1]/2+edges[1:]/2
+            dz = np.maximum(z-edges[:-1], edges[1:]-z)
+            radii = np.nextafter(np.hypot(half[0], dz), np.inf)
+            covers.append(SphereCover(f"cylinder-split-{count}", tuple((0., 0., float(v)) for v in z), tuple(map(float, radii)), 2))
+    elif shape == "box":
+        if 4 in counts:
+            from itertools import product
+            axes = np.argsort(-half, kind="stable")[:2]
+            cell = half.copy(); cell[axes] /= 2
+            radius = float(np.nextafter(np.hypot.reduce(cell), np.inf))
+            points = []
+            for signs in product((-1, 1), repeat=2):
+                center = np.zeros(3); center[axes] = np.array(signs)*half[axes]/2
+                points.append(tuple(map(float, center)))
+            covers.append(SphereCover("box-grid-4", tuple(points), (radius,)*4, -1))
+    else:
+        raise ValueError("shape must be box or cylinder")
+    return tuple(covers)
+
+
 def sphere_union_contains(points_m, cover: SphereCover) -> np.ndarray:
     """Test points against the sphere union, counting overlaps only once."""
     points = np.asarray(points_m, dtype=float)

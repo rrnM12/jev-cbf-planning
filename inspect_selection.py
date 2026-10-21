@@ -15,7 +15,7 @@ import time
 
 import numpy as np
 
-from geometry import evaluate_covers, make_sphere_covers
+from geometry import evaluate_covers, make_sphere_covers, make_shape_covers
 
 
 ROOT = Path(__file__).resolve().parent
@@ -26,6 +26,43 @@ def _vector(value, name):
     if vector.shape != (3,) or not np.isfinite(vector).all():
         raise ValueError(f"{name} must contain three finite coordinates in metres")
     return vector
+
+
+def scene_motion(state):
+    """Shared world-metre endpoints; robot motion is not a sphere proxy."""
+    motion = state["motion"] if "robot_context" in state else state["robot_proxy"]
+    return _vector(motion["start_m"], "start_m"), _vector(motion["goal_m"], "goal_m")
+
+
+def validate_scene(state):
+    """Validate geometry independently of whether model answers exist yet."""
+    scene_motion(state)
+    ids = set()
+    if not state.get("objects"):
+        raise ValueError("scene needs objects")
+    for obj in state["objects"]:
+        if not isinstance(obj["id"], str) or not obj["id"] or obj["id"] in ids:
+            raise ValueError("object IDs must be unique nonempty strings")
+        ids.add(obj["id"])
+        _vector(obj["center_m"], "object center")
+        size = _vector(obj["size_m"], "object dimensions")
+        if np.any(size <= 0) or obj["shape"] not in ("box", "cylinder"):
+            raise ValueError("expected positive box/cylinder dimensions")
+        if obj["shape"] == "cylinder" and size[0] != size[1]:
+            raise ValueError("circular Z-cylinder requires equal X/Y dimensions")
+        if "rotation" in obj or "quaternion" in obj:
+            raise ValueError("rotated objects are not supported")
+
+
+def validate_selection(report):
+    """Decode a successful saved answer without coupling control to a viewer."""
+    if report.get("error") or report.get("validation_error") or "response" not in report:
+        raise ValueError("need a successful saved selection response, not a preview or failed run")
+    validate_scene(report["request"]["state"])
+    proposals = decode_response(report["request"], report["response"])
+    if "proposals" in report and report["proposals"] != proposals:
+        raise ValueError("cached proposals disagree with the saved model answers")
+    return proposals
 
 
 def nominal_clearance(cover, object_center, start, goal, robot_radius):
@@ -47,7 +84,7 @@ def nominal_clearance(cover, object_center, start, goal, robot_radius):
     ))
 
 
-def prepare_request(scene, template, *, model="jev-latest", counts=(1, 2, 4), samples=100_000, seed=0):
+def prepare_request(scene, template, *, model="jev-latest", counts=(1, 2, 4), samples=100_000, seed=0, robot_context=None, shape_aware=False):
     """Reuse inspected covers; attach measured features and editable Choice questions.
 
     The example's frame is fixed and all objects are axis-aligned. Changing text
@@ -58,19 +95,22 @@ def prepare_request(scene, template, *, model="jev-latest", counts=(1, 2, 4), sa
         raise ValueError("scene.task must be nonempty text")
     if not isinstance(scene.get("frame"), str) or not scene["frame"].strip():
         raise ValueError("scene.frame must state the coordinate/length conventions")
-    proxy = scene["robot_proxy"]
-    start = _vector(proxy["start_m"], "start_m")
-    goal = _vector(proxy["goal_m"], "goal_m")
-    radius = proxy["radius_m"]
-    if isinstance(radius, bool) or not isinstance(radius, (int, float)) or not math.isfinite(radius) or radius <= 0:
-        raise ValueError("robot_proxy.radius_m must be finite and positive")
+    if robot_context is None:
+        proxy = scene["robot_proxy"]
+        start = _vector(proxy["start_m"], "start_m")
+        goal = _vector(proxy["goal_m"], "goal_m")
+        radius = proxy["radius_m"]
+        if isinstance(radius, bool) or not isinstance(radius, (int, float)) or not math.isfinite(radius) or radius <= 0:
+            raise ValueError("robot_proxy.radius_m must be finite and positive")
+    else:
+        _vector(scene["motion"]["start_m"], "start_m")
+        _vector(scene["motion"]["goal_m"], "goal_m")
     if not scene.get("objects"):
         raise ValueError("scene.objects must not be empty")
     state = {
         "description": scene.get("description", ""),
         "frame": scene["frame"],
         "task": scene["task"],
-        "robot_proxy": deepcopy(proxy),
         "feature_notes": (
             "Candidate sphere centres are object-local; object center_m translates "
             "them into world coordinates. Objects have identity rotation. "
@@ -81,6 +121,17 @@ def prepare_request(scene, template, *, model="jev-latest", counts=(1, 2, 4), sa
         ),
         "objects": [],
     }
+    if robot_context is None:
+        state["robot_proxy"] = deepcopy(proxy)
+    else:
+        state["robot_context"] = deepcopy(robot_context)
+        state["motion"] = deepcopy(scene["motion"])
+        state["feature_notes"] = (
+            "Ground-truth axis-aligned object bounds; sphere centers object-local, "
+            "translated by center_m. Covers are unions covering the full box. "
+            "Robot-aware motion features are attached by the robot request builder, "
+            "not estimated by a single end-effector sphere. No added physical margin."
+        )
     questions = {}
     object_ids = set()
     for obj in scene["objects"]:
@@ -92,7 +143,7 @@ def prepare_request(scene, template, *, model="jev-latest", counts=(1, 2, 4), sa
             raise ValueError("rotated objects are not supported by this axis-aligned fixture")
         center = _vector(obj["center_m"], f"{object_id}.center_m")
         size = _vector(obj["size_m"], f"{object_id}.size_m")
-        covers = make_sphere_covers(size / 2, counts)
+        covers = make_shape_covers(size/2, shape=obj["shape"], counts=counts) if shape_aware else make_sphere_covers(size / 2, counts)
         measurement = evaluate_covers(size / 2, covers, shape=obj["shape"], samples=samples, seed=seed)
         candidates = []
         for cover, result in zip(covers, measurement["candidates"], strict=True):
@@ -105,8 +156,9 @@ def prepare_request(scene, template, *, model="jev-latest", counts=(1, 2, 4), sa
                 "primitive_count": len(cover.radii_m),
                 "excess_volume_m3": result["excess_volume_m3"],
                 "excess_volume_standard_error_m3": result["excess_volume_standard_error_m3"],
-                "nominal_clearance_m": nominal_clearance(cover, center, start, goal, radius),
             })
+            if robot_context is None:
+                candidates[-1]["nominal_clearance_m"] = nominal_clearance(cover, center, start, goal, radius)
         state["objects"].append({
             "id": object_id,
             "description": obj.get("description", ""),
@@ -126,6 +178,16 @@ def prepare_request(scene, template, *, model="jev-latest", counts=(1, 2, 4), sa
             "instructions": template["geometry"]["instructions"].format(object_id=object_id),
             "criteria": {c["id"]: c for c in candidates},
         }
+    if shape_aware:
+        if robot_context is not None:
+            state["feature_notes"] = (
+                "Ground-truth axis-aligned object shapes; sphere centers are object-local and translated by center_m. "
+                "Every union covers the full reference shape. Box-section candidates cover the bounding box; "
+                "shape-aware cylinder candidates cover the cylinder itself. Robot-aware motion features come "
+                "from the request builder, not a single end-effector proxy. Excess-volume errors are Monte Carlo "
+                "sampling errors, not perception uncertainty. No physical margin or safety guarantee is implied."
+            )
+        state["feature_notes"] += " Shape-aware cylinder candidates cover the cylinder, not every corner of its bounding box. All candidates cover the full stated reference shape; grid candidates tile two box axes. No calibrated uncertainty margin."
     # JSON-native values make preview serialization, SDK input, and recorded input
     # identical. Reject NaN/Infinity before any request or output is written.
     return json.loads(json.dumps({"model": model, "state": state, "questions": questions}, allow_nan=False))
@@ -151,8 +213,12 @@ def decode_response(request, response):
         values = [answer["confidence"], *probabilities.values()]
         if any(isinstance(v, bool) or not isinstance(v, (int, float)) or not math.isfinite(v) or not 0 <= v <= 1 for v in values):
             raise ValueError(f"{question_id}: probabilities/confidence must be finite numbers in [0, 1]")
-        if not math.isclose(sum(probabilities.values()), 1, abs_tol=1e-5):
-            raise ValueError(f"{question_id}: probabilities must sum to one")
+        # The provider's Choice schema says APPROXIMATELY one. Actual responses
+        # round probabilities to hundredths, so K entries can accumulate up to
+        # K*0.005 rounding error. Keep the raw values and chosen ID unchanged;
+        # this is wire-format tolerance, not a confidence/safety threshold.
+        if not math.isclose(sum(probabilities.values()), 1, abs_tol=len(criteria)*.005+1e-8):
+            raise ValueError(f"{question_id}: probabilities differ from one beyond hundredth-rounding allowance")
         if probabilities[answer["choice"]] < max(probabilities.values()):
             raise ValueError(f"{question_id}: choice must have maximal probability")
     proposals = []

@@ -11,7 +11,7 @@ import xml.etree.ElementTree as ET
 
 import numpy as np
 
-from geometry import evaluate_covers, make_sphere_covers
+from geometry import evaluate_covers, make_sphere_covers, make_shape_covers
 
 
 def comparison_xml(half_extents, covers, shape):
@@ -60,20 +60,21 @@ def show_covers(half_extents, covers, shape, seconds=None):
     show_scene(xml, lookat=(0, 0, 0), distance=max(spacing * len(covers), 4 * span), seconds=seconds)
 
 
-def add_scene_labels(scene, labels):
+def add_scene_labels(scene, labels, *, append=False):
     """Add display-only text without changing model/physics geometry."""
     import mujoco
 
-    if len(labels) > scene.maxgeom:
+    start = scene.ngeom if append else 0
+    if start + len(labels) > scene.maxgeom:
         raise ValueError("too many labels for the viewer scene")
-    for index, (text, position) in enumerate(labels):
+    for index, (text, position) in enumerate(labels, start=start):
         geom = scene.geoms[index]
         mujoco.mjv_initGeom(
             geom, mujoco.mjtGeom.mjGEOM_LABEL, np.zeros(3),
             np.asarray(position, dtype=float), np.eye(3).ravel(), np.ones(4),
         )
         geom.label = text[:90]
-    scene.ngeom = len(labels)
+    scene.ngeom = start + len(labels)
 
 
 def show_scene(xml, *, lookat, distance, azimuth=-90, elevation=-15, labels=(), caption="", seconds=None):
@@ -109,6 +110,7 @@ def main(argv=None):
         metavar=("X", "Y", "Z"), help="full bounding-box dimensions in metres",
     )
     parser.add_argument("--counts", type=int, nargs="+", default=(1, 2, 4))
+    parser.add_argument("--shape-aware", action="store_true", help="also compare exact-cylinder slab covers or a four-cell box grid")
     parser.add_argument("--samples", type=int, default=100_000)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--no-view", action="store_true", help="numeric experiment only")
@@ -119,7 +121,7 @@ def main(argv=None):
         parser.error("--seconds must be finite and positive")
     half_extents = np.asarray(args.size) / 2
     try:
-        covers = make_sphere_covers(half_extents, args.counts)
+        covers = make_shape_covers(half_extents, shape=args.shape, counts=args.counts) if args.shape_aware else make_sphere_covers(half_extents, args.counts)
         report = evaluate_covers(
             half_extents, covers, shape=args.shape, samples=args.samples, seed=args.seed
         )
@@ -130,6 +132,8 @@ def main(argv=None):
         "covers the bounding box and any object contained in it. Analytic in exact "
         "arithmetic; sampled misses below are diagnostics, not the proof."
     )
+    if args.shape_aware:
+        report["coverage_basis"] += " Cylinder slabs or box-grid cells are each enclosed by their sphere; these unions cover the full stated shape, not necessarily the cylinder's bounding-box corners."
     print(f"Reference: {args.shape}, full dimensions {list(args.size)} m")
     print(f"Shared Monte Carlo points: {args.samples}; seed: {args.seed}")
     print(f"Reference object volume: {report['object_volume_m3'] * 1000:.4f} litres")

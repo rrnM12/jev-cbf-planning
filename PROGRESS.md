@@ -1,13 +1,540 @@
 # Progress and decisions
 
-Updated: 20 October 2026.
+Updated: 21 October 2026.
 
 ## Current checkpoint
 
-Inspect the first standalone Jev result in its full synthetic scene. Nihar
-approved a saved-result viewer after the successful live request. Keep all three
-upstream repositories unchanged. No robot integration, real contact exemptions,
-online update loop, or additional service calls in this viewer checkpoint.
+### Complete: pickup gallery and approved follow-on study
+
+Start with `artifacts/pickup/review/index.html`. The original four-item gallery,
+geometry-component study, two development templates, independent physical checks,
+deterministic-rule baseline, geometry-only ablation, CPU profiling, replay tooling,
+and 12-layout evaluation/corrected replication are implemented.
+
+| Corrected replication (same 12 layouts) | Safe pickups | Unwanted-contact cases | Mean enabled pairs |
+| --- | --- | --- | --- |
+| Scene CBFs off | 11/12 | 1 | 0 |
+| All-on | 12/12 | 0 | 296.00 |
+| Geometric rule | 12/12 | 0 | 151.71 |
+| All objects / Jev geometry | 6/12 | 0 | 172.75 |
+| Jev once | 6/12 | 0 | 146.17 |
+| Jev repeated | 12/12 | 0 | 156.94 |
+
+All 72 corrected trajectories pass independent native re-evaluation, identical-
+start/static-clutter/free-target checks, hashes, finite state/control checks and
+successful pickup confirmation windows. All 36 model-query snapshots match the
+recorded repeated-run q/v states; no sampled modeled h2 is negative, transformed
+h1 stays positive, and requested torque-limit excess is zero. Original held-out
+data (7/12 once, 11/12 repeated with one failed grasp) remains at `heldout_v1`;
+the corrected replication is not new unseen evaluation. Raw model answers were
+not changed. 89 tests pass. Final handoff checks passed: 39 HTML pages / 908 local
+links, all 12 layouts' six-panel playback controls and atlas mappings, automatic
+source-archive hashes, versioned layout-fixture identity, completed-run resume
+without new calls/physics, and credential exclusion across 2,282 source/result
+text files. Generated comparison stills were inspected directly; playback checks
+used a mocked DOM, not full browser visual certification. The key remains ignored,
+untracked and owner-only. All three upstream Git worktrees remain clean.
+Machine-readable handoff: `artifacts/pickup/handoff_checks_v1.json`.
+
+114 new logical SDK invocations in this approved package: estimated public-price
+token cost $0.067044516; conservative reservations $0.941359104, below $7.50.
+Ledger: `artifacts/usage/pickup_research_v1.json`. No further automatic queries
+or experiments are needed. Nihar requested publication on 21 October (D17);
+the source/test/fixture/documentation checkpoint is being verified for commit
+and push. Credentials, environments, caches and generated evidence stay local;
+upstreams remain read-only. This completes the software package, not the full
+research system or hardware/perception deployment.
+
+Main finding: continual selection fixes coarse initial representations, but the
+simple rule is stronger than Jev here on enabled count and scene-union excess
+(1.23 L rule vs 2.48 L repeated). Fewer enabled pairs do not shrink the fixed
+348-row scene allocation; warm filter timings are about 0.22 ms with all masks.
+The current prototype does not establish semantic-model value under oracle
+geometry. A useful next research input is per-candidate grasp/lift-reference
+clearance; geometry can block a future goal despite looking cheap in the current
+phase. Do not silently add a planner or relax contact authority to hide stalls.
+
+Reproducibility additions: future `prepare` saves source snapshots automatically
+and rejects mid-preparation source changes. Baseline reuse now requires exact
+source/state/settings matches; the earlier explicitly labeled development
+replays crossed only an inspected generator-helper edit and remain historical.
+`analyze_pickup.py replay --task-protocol archived` loads hash-checked archived
+task code with the corrected decoder. It reproduced the decoder-only failure
+with an exactly matching trajectory prefix and no API call. The current-task
+replay succeeds with the same proposals, but has changed controls/context.
+
+### Implementation history: static-clutter pickup
+
+**The first four pickup work items are complete.** Open
+`artifacts/pickup/showcase_v1/index.html`: 12 physical rollouts, three fixed
+layouts, off/all-on/Jev-once/Jev-repeated, with synchronized playback. All methods
+complete pickup in open_pickup and offset_target. In approach_clutter, off contacts
+clutter and fails; all three constrained methods avoid unwanted contact but stall
+during descent. Independent checks verified every saved trajectory's hash, finite
+states/torques, target free-body trace, length, and successful 0.25 s bilateral
+contact/lowest-point lift windows (`verification.json`). All 79 tests pass.
+
+14 new logical Jev invocations returned successfully. Reported input-token cost
+estimate is $0.00611037, with $0.115605504 conservatively reserved for possible SDK
+retries/full contexts, under the $7.50 cap. The persistent ledger is
+`artifacts/usage/pickup_research_v1.json`. Initial answers are shared by once and
+repeated; no requery-for-preferred-answer or post-answer prompt/scene edits.
+Repeated selection drops the now-irrelevant bottle in open_pickup and reduces
+other covers from four to two spheres. Mean enabled pairs: all-on 296; once
+122/180/180 and repeated 96.52/133.80/154.02 in open/approach/offset respectively.
+Allocated rows remain 348; no solver-speedup or completion improvement is shown.
+
+The difficult nominal grasp posture has a 31.5 mm native link5/bottle penetration
+and a -52.4 mm sphere barrier. The stall is not merely excess cover volume; the
+original local pose controller does not find another posture/route. Retained
+diagnostics are under `artifacts/pickup/development_v3/approach_clutter`. Do not
+claim that tighter geometry alone solves it, or silently add/replace a planner.
+
+Now continuing the approved follow-on work. A measured CPU bottleneck was eager
+per-step FK: median 3.697 ms versus 0.00946 ms for a warmed JIT position wrapper.
+Added that wrapper without changing controller equations/task logic; checking
+regressions before new runs. First-showcase physics sources were preserved in
+its `source_snapshot/` before edits. Completed-run resume now skips calls/runs
+even after later source edits; incomplete runs still require matching frozen
+sources. New optional shape-aware sphere candidates (exact cylinder slabs and a
+four-cell box grid) are being checked independently before selection studies.
+
+Follow-on update: 83 tests pass after the compiled FK wrapper, shared policy
+admission gate, and optional shape-aware candidates. The geometry-only study at
+`artifacts/pickup/geometry_study_v1` uses 300,000 shared Monte Carlo points per
+case. Four-sphere cylinder excess drops from 2.2144 L to 0.9358 L (about 58%);
+cube excess drops from 0.8947 L to 0.6958 L with a four-cell grid. Analytic cell/
+slab enclosure arguments and independent boundary tests establish coverage in
+exact arithmetic; zero sampled misses are a separate diagnostic, not a proof.
+
+Added an explicit non-model `rule` baseline: constrain objects if any cover
+intersects the sampled phase forecast; choose least estimated global excess
+volume, then count/ID. Uses the same admission gate, no fabricated Jev answer.
+It completes the two easy development layouts and safely stalls in the original
+hard layout. Its rule is inspectable, not a certified fallback or tuned optimum.
+
+Preparing two frozen development comparisons on the original three layouts with
+the expanded geometry family: `development_shape_prompt1_v3` and
+`development_shape_prompt2_v2`. The new JSON template is
+`prompts/pickup_selection_v2.json`; no new calls beyond the first 14 yet. Identical
+non-model baselines may be reused across prompt variants only after exact state,
+settings, physics/feature-source and trajectory-hash checks; copies are explicitly
+labeled as replay, not fresh independent trials.
+
+Separately generating 12 new static layouts offline at `layout_generation_v3`
+for later held-out evaluation, without consulting model answers. The generator
+looks for nominal-path obstruction/near misses while preserving clear initial
+and grasp/lift configurations, retaining its search metadata. Drafts v1/v2 had
+an invalid static-world probe pose/cache assumption; both are retained with
+`evaluation_correction.json` and had no model calls. Version 3 uses fixed-size
+evaluation-only mocap probes (excluded from robot geometry) and asserts actual
+probe world poses; these are offline placements, not moving benchmark obstacles.
+
+The 12-layout original held-out batch is now complete at `heldout_v1`: 72 runs
+across off/all/rule/all-with-Jev-geometry/once/repeated. Safe completions are
+11/12, 12/12, 12/12, 7/12, 7/12, 11/12 respectively; all sampled modeled barriers
+remain nonnegative. Repeated querying resolves four one-shot stalls, but all-on
+and the simple rule are stronger completion baselines here. No superiority claim.
+The first prompt was selected before held-out model answers: the revised prompt
+did not improve development outcomes and used more enabled pairs. Protocol is
+`heldout_protocol_v1.json`; raw data and independent audits are retained.
+
+Diagnosis of layout_02 repeated failure: it is NOT a clutter collision. The
+open gripper was deflected laterally while descending, disturbed the target,
+then closed/lifted without a real grasp. The fallen cylinder eventually rolled
+into fixed link0 at 17.376 s. Two earlier updates were rejected solely because
+rounded probabilities summed to 0.99 (including an unused box-geometry answer).
+The installed provider SDK's Choice schema explicitly allows approximately-one
+mass. Corrected our decoder to allow K*0.005 rounding error for K hundredth-
+rounded entries, retaining raw values/IDs and all range/key/argmax checks.
+`decoder_correction_replay_v1` uses original answers/times without new calls;
+its trajectory prefix matches exactly, but it still fails: decoder correction
+alone does not fix the grasp skill.
+
+Added a small high-level task correction, not new FRAX arm-control math: align
+above the target before descent; require settled pose/rotation before closing;
+back off above it if the descent is deflected sideways; do not lift without
+bilateral contact. Provisional editable defaults: 4 cm pregrasp clearance,
+5 mm alignment, 0.08 rad rotation tolerance, 0.02 m/s speed. These are simulated
+skill settings, not hardware safety limits or architecture requirements.
+`alignment_correction_replay_v1` succeeds safely using the same recorded
+proposals (5.146 s); controls now differ before old query times, so this is a
+diagnostic replay, not fresh Jev performance. Also clarified request wording:
+shape-aware cylinder covers enclose the full cylinder, not unused box corners.
+
+Preparing `corrected_replication_v2` on the SAME 12 frozen layouts and selected
+original template, with the corrections above and all six methods rerun. This
+is a code/skill-corrected replication, NOT a new unseen benchmark or retry-until-
+success. Original outcomes remain untouched. Freeze/reason record is
+`corrected_replication_protocol_v2.json`. At this point the session has 78 new
+logical requests, estimated token cost $0.044869188 and conservative reservations
+$0.644087808 under the $7.50 cap. No new replication model calls yet.
+
+Implementation in progress: `pickup.py`, `run_pickup.py`, `pickup_gallery.py`, and
+`api_budget.py`. New `frax_gripper` profile retains native finger actuation and
+splits their inertias out of the FRAX aggregate at 2 cm reference opening: native
+arm-block mass/bias match to about 1e-11 there. Finger motion, grasp contact and
+payload are not modeled by the seven-DOF CBF dynamics; no contact-safety proof.
+The original FRAX nominal torque controller is still executed, not copied.
+
+Offline native free-body grasp/lift succeeds and stops at the configured
+verification window; no weld/attachment/teleport. Starting parameters in
+`pickup.DEFAULTS` are editable provisional choices: 2 ms step, 25 cm approach,
+9.5 cm grasp height for the 12 cm target, 8 cm commanded verification lift,
+5 cm lowest-point success clearance held with bilateral contact for 0.25 s,
+20 s timeout. They are not settled research/hardware requirements.
+
+Found the original closed-tool spheres miss open-finger vertices by up to 24.9 mm.
+Added eight sphere envelopes derived from native finger collision bounds across
+their full joint travel; independent aperture/pose regression checks pass. All
+original protections remain, with added envelope-floor barriers. Clutter pairs
+with 29 spheres; the designated target protects the 16 upstream arm spheres.
+Only intended tool-target CBF pairs are exempt, and the independent native audit
+still rejects palm/arm-target and all robot/target-clutter contact.
+
+`artifacts/pickup/development_v3` has six offline baseline runs: off/all-on both
+pick up successfully in open_pickup and offset_target. In approach_clutter, off
+contacts clutter and fails pickup; all-on avoids contact and keeps modeled
+barriers positive but stalls during descent. This failure is retained, not tuned
+away. Four pickup tests and three budget tests pass, in addition to the previous
+71-test regression pass before the envelope extension. This was the pre-live
+development checkpoint; the completed frozen showcase and calls are above.
+
+Nihar clarified the direction on 21 October (D14): one task family only. Maneuver
+the arm/gripper through static clutter, pick up the designated target, and end
+when pickup is verified. Different clutter layouts and target positions are
+variations, not different tasks. No placement, transport, pushing, or independently
+moving obstacles. Target motion during pickup is expected, not obstacle motion.
+
+The immediate implementation gap is genuine simulated grasping/pickup: the
+current matched plant has rigid fingers and the showcase demonstrates reaching,
+not object acquisition. Reuse the controller, geometry selection, CBF integration,
+and viewing infrastructure; distinguish intended gripper-target contact from
+unwanted collisions. Do not preselect arbitrary grasp-success thresholds or a
+full future research protocol here. Nihar subsequently approved the four pickup
+work items and then the seven proposed follow-on items (D15): genuine-success
+checks, additional static layouts, failure diagnosis, geometry-selection study,
+development/held-out prompting comparisons, measured profiling, and rerunnable
+viewing/reporting. Their order follows evidence, not a rigid milestone sequence.
+Implementation has started with inspection of the existing gripper/model/controller
+interfaces. Nihar authorized a hard $7.50 cap on new Jev API usage for this work,
+using the existing key (D16). It replaces proposed request-count caps. Current
+official pricing at https://docs.typesafe.ai/models (checked 21 October) is
+$0.042 / million input tokens, with output free; default context is 64k/request.
+Reserve before requests and record actual usage, including uncertain failed
+attempts, rather than treating a successful logical call as the only possible
+charge. No new model calls have been made. Push is not approved.
+
+### Completed showcase
+
+**Complete: autonomous diagnosis through the initial dynamic simulation showcase.**
+Open `artifacts/showcase/dynamic_v1/index.html`; start with the handoff fixture and
+scrub 4–8 seconds. Four synchronized panels show off/all/once/repeated with physical
+objects, enabled covers, current clearances, goal error, and constraint counts.
+
+| Dynamic fixture | Off | All-on | Jev once | Jev repeated |
+| --- | --- | --- | --- | --- |
+| Distant object approaches/leaves | Contact | Pass | Pass | Pass |
+| Obstacle handoff | Contact | Pass | Contact | Pass |
+
+Eight rollouts completed 6,000 steps / 12 simulated seconds each, with no numerical
+warnings. All-on and repeated have no sampled native scene contact and reach both
+final goals. Repeated adds object_b at 4.170 s in the handoff, before its approach
+causes contact in the one-shot run. Both modes share the exact initial answer;
+once still tracks current poses/velocities, freezing only role/geometry choices.
+Incoming once/repeated both protect object_a from the start, so that fixture
+does not demonstrate a benefit from repolling. All constrained modeled barriers
+remain positive (minimum about 0.478 mm), including the one-shot run that contacts
+an omitted object: this shows why native evaluation of every object is necessary.
+
+Jev's mean enabled pairs are 84 versus 168 all-on in incoming and 138.81 versus
+252 in handoff. The fixed-capacity QP keeps all allocated rows: this is not a
+demonstrated QP dimension/runtime reduction. Jev never removes an already selected
+object later in these runs; runtime removal is supported/tested, but effective
+dropping remains an open research limitation. These two frozen fixtures are not
+a statistical benchmark, general safety result, or real-time/hardware guarantee.
+
+All 12 planned new logical SDK invocations succeeded, returning jev-1.13.0:
+100,310 input / 2,736 output tokens, invocation times 0.128–0.357 s. The ten later
+responses were applied approximately 0.138–0.170 simulated seconds after dispatch
+in wall-paced rollouts. Initial answers are shared; ordinary SDK retries may
+apply, not twelve necessarily unique HTTP attempts. No model/prompt/scene tuning
+after answers and no additional calls to obtain preferred decisions. Raw queries,
+responses/probabilities, events, trajectories, and source/input hashes are saved.
+
+Verification: 71 tests pass; native mass/bias/acceleration parity, original
+protection parity, obstacle-velocity derivatives, runtime-array updates, admissible
+installation/failure retention, collision positive controls, one-shot ledgers,
+and audit-bound reports are covered. Synchronized scrub/pause/restart/play controls
+passed a Node mocked-DOM check; generated baseline/final/7-second comparison
+frames were inspected directly. No browser screenshot/safety certification claim.
+Upstreams stay read-only; all new code remains local/uncommitted/unpushed.
+Final audit also verified identical mode starts/object paths, every query's actual
+recorded q/v snapshot, unchanged frozen inputs/core physics sources, all gallery
+links, credential exclusion/owner-only permissions, and no new calls on a completed
+workflow resume. Evidence is in `verification.json` and `test_output.txt` alongside
+the showcase. All three upstream Git worktrees remain clean; `git diff --check`
+passes locally.
+Further research follows the next user direction; the showcase task needs no
+additional model calls or background experiment.
+
+### Implementation decisions and diagnosis
+
+Nihar explicitly asked to diagnose and solve problems independently and continue
+through the final showcase without intermediate human input. The scope included
+local simulation/model integration corrections, continual constraint updates,
+bounded necessary live Jev calls, tests, comparisons, and a final gallery. Preserve
+the original nominal policy and robot protections, keep upstream repos read-only,
+retain failures, and document consequential choices. No hardware/perception or
+commit/push. The older six-call/static stop points below are historical. The
+diagnosis/correction preceded construction of the online loop.
+
+Diagnosis/correction evidence (21 October): the original XML has armature 0.1,
+damping 1, and a different fixed-tool inertia from the FRAX URDF. Added an explicit
+`frax` simulation profile in `sim_model.py`: transfer FRAX inertial parameters
+into an in-memory native spec, use a rigid closed gripper, and remove passive
+damping/rotor inertia absent from that model. Keep original collision/visual
+geometry and the unchanged `upstream` profile. This is an idealized matched plant,
+not calibration or a fix in upstream source. Independent native mass/bias/
+acceleration checks agree to <1e-8 across sampled states (acceleration ~2e-10).
+
+Matching dynamics reduces the hand-path crossing from 2.759 mm to 0.0214 mm.
+Halving the hold period reduces it to 0.00854 mm, with near-zero QP inequality
+residuals. A local CBFpy subclass tightens only scene acceleration inequalities
+by 0.05 m/s²; geometry and both alphas remain unchanged. This empirical
+sampled-control guard is not calibrated perception uncertainty or a formal
+robustness bound. All 12 constrained rollouts of the saved six-scene selections
+now have nonnegative sampled original h2; four still miss the goal. Their selected
+covers overlap the nominal goal configuration, so better enforcement cannot by
+itself fix completion. Original data are retained. New correction audit:
+`artifacts/diagnosis/static_corrected_v1`; paired diagnostics under
+`artifacts/diagnosis/matched_v1`. Reused answers are a correction replay, not fresh
+model performance for the changed plant.
+
+Implemented `runtime_cbf.py` and `online.py`: reuse FRAX barrier/objective/dynamics
+methods and CBFpy via runtime array arguments, explicit time state/obstacle
+velocities, fixed-capacity masked slots, background requests, saved attempts,
+current-pose rebasing, and h2/h1 admissibility checks before installing answers.
+The original nested FRAX nominal torque computation remains unchanged; its
+filter moves outside the nominal JIT to avoid stale captured Python attributes.
+Errors/review/rejected updates retain the previous policy, initially all-on;
+this is explicit behavior, not a certified fallback. Fewer enabled rows do not
+reduce the allocated QP shape in this first implementation.
+
+Prepared two frozen 12-second dynamic fixtures in
+`artifacts/showcase/dynamic_v1`, with editable source scenes/questions under
+`examples/dynamic_scenes.json` and `prompts/dynamic_selection.json`. Future motion
+scripts/titles are not passed to Jev. Current poses/velocities and a clearly
+labeled heuristic whole-arm joint-interpolation forecast are supplied. Four
+offline off/all baselines completed: off contacts in both, all-on no sampled
+contact and reaches both goals. A new mocap-body diagnostic bug initially counted
+scene bodies as robot geometry; fixed exclusion and added a positive-control
+regression. Original summaries/NPZs are retained; hash-bound collision re-audits
+provide corrected data independently. Six online-loop tests and three dynamics/
+guard tests passed before the live calls. The planned 12-call execution and
+synchronized playback are now complete, with outcomes above. No upstream changes.
+
+### Completed robot-aware static checkpoint
+
+**Complete, including user visual review: robot-aware static suite and reusable workflow.** Nihar
+approved the extended checkpoint: approximately six scene variations, actual Panda
+state/intended-motion context, one-shot Jev selection, off/all/Jev comparisons,
+independent diagnostics, and a combined gallery. Six new SDK invocations are in
+scope, one per scene, without repeated prompting for preferred answers. Freeze
+scene/question/request snapshots before looking at model answers. No perception,
+online updates, contact tasks, hardware, controller replacement, or upstream edits.
+
+Infrastructure first: extend the reusable scene/request/runner interfaces; the
+suite is their first evaluation consumer, not six throwaway demo scripts. Keep
+the original controller/protections. A free-space nominal rollout (scene contact
+forces disabled only for that prediction) supplies measured whole-arm motion
+features; evaluated off/all/Jev runs keep physical object collisions enabled.
+The all-on reference will use explicit fixed four-sphere covers, independent of
+Jev's answers. This tests the combined role/geometry choice, not an isolated causal
+effect of role selection. Record failures and coverage/conservatism costs; do not
+silently repair model decisions. All of these are inspectable starting choices,
+not a frozen future architecture.
+
+Implemented the shared motion/validation interface, `robot_selection.py` feature
+builder, `run_suite.py` phased workflow, editable `examples/robot_scenes.json`, and
+`prompts/robot_selection.json`. Baselines use no fabricated model responses;
+`jev` mode requires a real robot-context report, while old proxy data stays in
+explicit replay mode. 58 offline tests pass, including frozen-input/one-shot
+guards and no oracle label leakage. No additional dependencies.
+
+Pre-model qualification: draft `artifacts/suite/panda_static_v1` failed native
+endpoint-clearance checks in two layouts. Retained it unqueried, including a
+pre-model geometric layout search. Moved the tall object and two-sided passage
+before any model answers; final `artifacts/suite/panda_static_v2` has valid initial
+geometry, a native-collision-free nominal endpoint, and initially admissible
+fixed-four covers in all six scenes. Snapshots/requests/questions are hashed and
+frozen. These checks do not prove every path/representation is feasible.
+
+Completed all 12 physical baseline rollouts (3,000 steps each) before live calls:
+off has contacts in hand_path, arm_clutter, and distractors; fixed-four all-on has
+no sampled scene collisions, but misses the 2 cm goal criterion in those three
+and tight_passage. Those failures are retained, not retuned away. This baseline
+phase finished before any of the six new model calls.
+
+All six new SDK invocations have now succeeded, returning `jev-1.13.0`. Each
+response and all role/geometry probabilities are saved under the frozen v2 scene
+directory. All six attempts are recorded successful in `attempts.json`; no further
+model calls remain in this checkpoint's budget. No prompt, scene, gain, or model
+changes after seeing answers. All 18 physical rollouts and the combined gallery
+are complete. Jev omitted distant clutter, chose four spheres
+for the collision-relevant objects, and chose one sphere for the clear-path cube.
+Shape-tradeoff object's compact-neighbor omission had only P=0.51; record/show that
+ambiguity without replacing its answer or querying again.
+
+Open `artifacts/suite/panda_static_v2/index.html` for the six-scene review. This is
+six hand-designed variations of one no-contact reaching task, not six independent
+tasks or a statistical benchmark. Each mode ran 3,000 steps / six simulated seconds.
+
+| Scene | Off contact flag | All-on pairs / final error | Jev pairs / final error |
+| --- | --- | --- | --- |
+| Clear path | No | 252 / 1.4 mm | 105 / 1.4 mm |
+| Hand path | Yes | 168 / 32.0 mm | 84 / 32.0 mm |
+| Tall arm clutter | Yes | 168 / 36.2 mm | 84 / 36.2 mm |
+| Distractors | Yes | 336 / 32.0 mm | 84 / 32.0 mm |
+| Tight passage | No | 252 / 22.9 mm | 168 / 22.9 mm |
+| Shape tradeoff | No | 252 / 1.4 mm | 84 / 1.4 mm |
+
+All-on and Jev have no sampled native scene collision/contact flags. Jev uses
+33–75% fewer scene pairs per case than fixed-four all-on, but **does not improve
+goal completion**. Both have negative modeled scene `h_2` in the hand-path,
+tall-clutter, distractor, and tight-passage cases: approximately -2.759, -1.079,
+-2.759, and -0.427 mm respectively. These cases also miss the unchanged 20 mm
+final-error criterion. Complete + within 20 mm + no sampled scene violation + no
+negative `h_2` gives off 3/6, all 2/6, Jev 2/6. No contact is not proof that the
+modeled CBF safe set held. QP inequality excess is about 1e-14 and requested
+torque-limit excess is zero; do not attribute the crossings to solver relaxation
+as an established cause.
+
+A read-only same-state acceleration probe found FRAX `f + g*u` and MuJoCo
+`mj_forward` disagree for the hand-path Jev trajectory. Maximum joint acceleration
+differences were 40.73 rad/s² initially and 2.76 rad/s² at the worst scene barrier
+sample. The original simulator has joint damping 1 and armature 0.1. This observes
+a dynamics mismatch; it does not isolate a unique cause of barrier crossings.
+Saved `model_diagnostics.json` records the probe. No controller, physics, gain,
+solver, or upstream change was made to hide the failure. Discuss the appropriate
+next diagnostic/correction with Nihar after visual review.
+
+Final verification: 58 offline tests pass, including real-upstream protection/frame
+parity, physical collision positive controls, frozen-request/one-shot guards,
+and display-label preservation. All frozen hashes and request/runtime contexts
+match; every gallery image/data link exists. All 18 rollouts completed without
+numerical warnings. The six calls returned 100,474 input / 1,548 output tokens in
+total. SDK invocation times ranged 0.186–0.582 s; these single ordered observations
+are not an inference-latency or real-time benchmark. Generated frame images were
+inspected directly, including object-ID labels. Nihar accepted the visual-review
+checkpoint, saying "yes it looks good" after the guided OFF/ALL/JEV comparison.
+This is visual acceptance, not a safety certification or evidence that the known
+barrier/dynamics issues are resolved. Agree on the next diagnostic task before
+changing code/controller behavior or starting further experiments.
+The three upstream worktrees remain clean. Code is local/uncommitted; last
+published checkpoint remains `f432eef`. No further model calls are authorized.
+
+### Completed first static replay checkpoint
+
+Nihar approved continuing through the static, no-contact simulation comparison:
+connect saved covers to the FRAX/CBFpy controller, test the integration, compare
+scene-object constraints off/all-on/selection-replay, and produce diagnostics and
+a rerunnable gallery before the next human review. No additional model calls,
+online updates, contact exemptions, perception, or hardware. Upstreams read-only.
+
+**Static comparison checkpoint complete, including Nihar's animation review.**
+Nihar reported "all the animations look good and normal." This confirms the user
+visual check, not a safety advantage or approval for additional experiments.
+Open `artifacts/static/review/index.html`. All three modes completed 3,000 steps
+(6 simulated seconds), reached approximately 1.4 mm final EE error, and had no
+sampled object penetration or negative modeled barriers. All-on and replay
+trajectories matched to floating-point precision; off also succeeded. This is an
+integration result, **not a demonstrated safety/completion advantage for Jev**.
+No new model calls, prompts/gains/scene tuning, dependencies, or upstream edits.
+**Verification: all 51 tests pass**, including real-upstream protection/frame
+parity and independent collision positive controls. A bounded 100-step live
+`--view` run also completed and closed normally; its short duration is not a
+goal-completion test. The gallery has 61 replay frames per mode plus final stills.
+Checked that every gallery image/data link exists, regenerated it with the
+corrected collision audit, and opened `artifacts/static/review/index.html` using
+the normal desktop launcher for Nihar. Nihar has now reviewed all animations;
+the agent inspected the generated final-frame images directly. No extra
+experiment is running. Agree on the next research step before implementation.
+
+The original demo's nominal controller is nested inside `main()`; it is reused
+through scoped module bindings rather than copying its equations. Its existing config already
+accepts arbitrary obstacle sphere arrays, including an empty array for scene-off.
+Original joint/singularity/floor/self-collision and torque protections stay active.
+`run_static.py` supplies arrays and in-memory scene additions, records physics and
+diagnostics, and restores module bindings. `static_gallery.py` renders actual
+recorded states into looping APNGs and a local HTML report. Renderer frame images
+were inspected directly; this uses generated simulation data, not denied app
+screenshots. No screen-access bypass was needed.
+
+| Review run | Scene spheres / pair constraints | Final EE error | Minimum object distance | Median / p95 controller host time |
+| --- | --- | --- | --- | --- |
+| Scene off | 0 / 0 | 1.403 mm | 57.0 mm | 0.141 / 0.163 ms |
+| All conditional covers | 10 / 210 | 1.402 mm | 63.1 mm | 0.193 / 0.242 ms |
+| Saved selection replay | 8 / 168 | 1.402 mm | 63.1 mm | 0.169 / 0.195 ms |
+
+Total barriers are 43/253/211 respectively; 43 existing robot protections remain
+in every mode. All-on adds the omitted far cube's saved two-sphere conditional
+cover, keeping selected-object geometry equal across all/replay. The 20% reduction
+is in included scene pairs, not necessarily active constraints: near-binding pair
+counts had median 0 and maximum 1 in both constrained runs (absolute residual
+within solver_tol=1e-5; descriptive, not the solver's active set). This is one easy
+scene, not a statistical safety-rate or speedup benchmark; timing includes desired
+state handling and synchronized torque retrieval, excludes the first control
+step, and is not pure solver time or full-loop real-time certification.
+
+All 23 MuJoCo robot collision geoms, including base/gripper, were checked against
+all three exact scene primitives at 3,001 recorded states per mode using separate
+MjData. No contact samples were found. Distances use MuJoCo collision shapes/hulls,
+not visual-mesh truth, and do not establish continuous-time safety. Maximum CBF
+inequality excess was approximately 1.1e-14 (all) / 8.9e-15 (replay), and requested
+torque-limit excess was zero; the inherited elastic solver still has no blanket
+hard-safety guarantee. Minimum modeled floor and self-collision barriers were
+positive. The far cube's minimum measured robot clearance was 376.7 mm. Off/replay
+EE paths differed by at most 8.23 mm; all/replay joint trajectories differed by
+at most 4.44e-16 rad in the first full comparison.
+
+The final positive-control test initially failed: a deliberate box/robot-mesh
+overlap returned exactly zero from `mj_geomDistance`, which the first evaluator
+had not flagged as penetration. Corrected the evaluator to flag all nonpositive
+distances and contacts, supplementing distance queries with negative contact
+depths. Both fixed-base overlap/zero-distance and recompiled moving-link overlap
+controls now pass. Reanalyzed all 3,001 saved states per mode: original distances
+were already strictly positive and are exactly unchanged, with zero contact or
+nonpositive-distance flags. Reanalysis is saved separately in
+`artifacts/static/review/collision_recheck.json`; original trajectories/timing
+reports remain intact. The gallery incorporates this recheck. This avoids
+silently claiming the initial strict-negative test alone certified clearance.
+
+Initial states match exactly across modes. An additional probe at four recorded
+states found protected barriers exactly equal to the original upstream config and
+joint-origin frame discrepancies below 4e-12 m. This is protection/frame parity,
+not a full dynamics equivalence proof. A regression checks parity/frame
+consistency and deliberately places an omitted object into robot geometry to
+verify the independent checker detects it. Earlier full runs under `initial/`
+and `verified/` are retained; the final `review/` repeat has exactly equal qpos/qvel
+to `verified/` after a logging-only initialization-timer correction. Timing-only
+repeats are not independent experimental trials or selected best runs.
+
+New code and documentation are local/uncommitted. The last published checkpoint
+is still `f432eef`; do not push this new work without a request.
+
+The saved proxy starts at [0.10, 0, 0.06] m; default Panda EE is approximately
+[0.3749033, 0, 0.4093534] m. A local fixed-orientation IK attempt for the proxy start
+stopped 7.4 mm away and had a -91.5 mm self-collision barrier. This is not a proof
+that no valid IK solution exists, but does not justify initializing there. Keep
+the valid upstream default joints, recorded objects, and recorded goal; explicitly
+label reused answers as proxy-decision replay with changed start/body context.
+Do not claim new whole-arm Jev decisions. Independent collision checks include
+all objects, not just selected ones. The recorded goal has a local IK solution
+with 2.3 micrometre position error and positive sampled floor/self barriers; this
+does not certify a collision-free path to it.
+
+### Completed saved-result viewer checkpoint
 
 **Viewer checkpoint complete: implementation, automated/launch checks, and
 Nihar's visual review.** Nihar said "looks good" after viewing the scene.
@@ -29,7 +556,8 @@ proposed `avoid / box-split-4` for the bottle and nearby cube, and `omit` for th
 far cube. All six answers passed contract validation. The cube geometry answer
 was ambiguous (P(4 spheres)=0.46, P(2 spheres)=0.37, reported confidence=0.19).
 This is one synthetic-scene observation, not a benchmark, optimality result,
-whole-arm safety check, or real-time claim. No proposal controls the robot.
+whole-arm safety check, or real-time claim. No robot control ran in that standalone
+request; the later static replay is a separate experiment described above.
 
 The complete request and SDK response are saved locally in
 `artifacts/selection/live_initial.json` (ignored by Git). The 39 offline tests
@@ -42,8 +570,9 @@ stores or global security settings were accessed/changed.
 The starting input is a synthetic free-space task with one swept end-effector
 sphere, three static axis-aligned objects, and no authorized contact. It is not
 the FRAX arm or a simulator rollout. Role choices and conditional geometry choices
-share one request but are independent, as required by the API. All outputs remain
-inspectable proposals. Templates, counts, task text, and scene facts are easy to
+share one request but are independent, as required by the API. Standalone outputs
+remain inspectable proposals; their later use is explicitly labeled simulation
+replay. Templates, counts, task text, and scene facts are easy to
 change; these starting choices do not settle the eventual task/contact policy.
 
 ### Completed isolated geometry checkpoint
@@ -266,7 +795,11 @@ model inference; one observation is not a latency benchmark. No controller,
 physics, model thresholds, prompt wording, or scene was changed to improve the
 result, and no follow-up service queries have been made in this checkpoint run.
 
-## Execution workflow and next action
+## Historical execution workflow and permission notes
+
+The current completed handoff is the static-clutter pickup review at the top of
+this document. This section retains the earlier setup/reaching workflow, not a
+request to restart it or an active gate on already approved work.
 
 Follow the active runtime policy. Current permissions allow direct network,
 uv, and GUI operations; do not request escalation under a policy that forbids
@@ -298,17 +831,18 @@ uv run --offline --frozen --cache-dir .uv-cache mjpython -B -u view_selection.py
 ```
 
 Nihar reviewed the scene and said "looks good"; this checkpoint is complete.
-The uncertain cube tradeoff remains a research question, and the static nominal
-path has not been made safe. Proposed next step, not yet approved: connect saved
-selections to the FRAX/CBFpy controller for a static, no-contact reaching scene,
-preserving existing robot protections, before attempting online updates.
-Agree on the next integration step with Nihar; do not silently change prompts,
-introduce a cost weighting, or
-launch repeated service calls to obtain a preferred result. Credentials load via
-uv's `--env-file .env.local`; do not print the key or search unrelated stores.
-Do not automatically add ellipsoids, controller integration, real contact
-exemptions, repeated querying, or a benchmark suite. A model's type-correct answer
-does not establish its obstacle-selection correctness or safety.
+Nihar then approved the static integration/comparison bundle and has now reviewed
+all animations at `artifacts/static/review/index.html`, reporting that they look
+good and normal. The subsequently approved robot-aware extended checkpoint is
+also implemented and its visual-review checkpoint has been accepted at
+`artifacts/suite/panda_static_v2/index.html`. Nihar subsequently authorized
+autonomous diagnosis/fixes/continual updates through the final showcase. That work
+is complete at `artifacts/showcase/dynamic_v1/index.html`; open the handoff fixture
+first and scrub 4–8 seconds. All 12 planned new calls are spent; no extra experiment
+is running. Further work follows the next user direction, not an automatic
+extension into perception/hardware or retuned prompts. Credentials load via uv's
+`--env-file .env.local`; never print the key or search unrelated stores. A model's
+type-correct answer does not establish its obstacle-selection correctness/safety.
 
 ## Approved decision log
 
@@ -326,6 +860,13 @@ These decisions came from Nihar's explicit directions/approvals in this discussi
 | D08 | Next checkpoint: isolated sphere-cover candidates, coverage/excess-space checks, and inspectable visualizations. | Nihar approved "ok start working" after the proposed 1-sphere versus chain-of-spheres experiment. No Jev calls or controller integration included. |
 | D09 | Tiny standalone task-conditioned Jev experiment using known scene objects and candidate IDs. | Nihar answered "yes" after screenshot review. Build/inspect the request and model proposals without robot integration; live access needs local credentials. This does not approve broad loops, contact-policy changes, or hardware work. |
 | D10 | View the saved Jev selection in its full synthetic scene. | Nihar approved the next-step viewer. Display recorded objects, selected covers, and nominal proxy motion without additional API calls or controller integration. |
+| D11 | Continue through a tested static, no-contact Panda integration and three-mode comparison with diagnostics/gallery, then human review. | Nihar said "ok start working and go until then" and "keep going." Preserve robot protections; no extra Jev requests, online updates, contact tasks, perception, or hardware. Surface consequential mismatches, including proxy-to-arm context changes. |
+| D12 | Robot-aware static mini-suite through combined review gallery, with about six scenes and six one-shot Jev invocations. | Nihar said "ok start working and get to that checkpoint." Fixed scenes before model answers, actual robot context, off/all/Jev runs, reusable infrastructure and inspectable failures. No online querying, contact tasks, hardware, or controller replacement. |
+| D13 | Continue autonomously through diagnosis, fixes, continual updates, and the final simulation showcase, without intermediate human input. | Latest explicit user direction superseded static-review stops; local changes and necessary bounded live calls were in scope, not hardware/upstream edits/publication. Implemented with two dynamic fixtures and 12 planned calls, all retained. |
+| D14 | One task family: maneuver through static clutter, pick up a designated target, then stop. | User clarified that surrounding obstacles remain static and there should be only this task type. Layouts/target positions may vary; no placing, transport, pushing, or moving-obstacle experiments. Genuine simulated pickup remains to be implemented. |
+| D15 | Implement the four pickup work items, then continue with the seven evidence-driven follow-on items. | User said "yes good do these things after you get the first 4 work items that you previously mentioned done." Build functional pickup, integrate contact-aware Jev/CBFs, compare methods, and render the gallery, then check reliability/layouts/failures/geometry/prompts/cost/workflow. Additional live-call cap is pending; no push/hardware/upstream edits. |
+| D16 | Up to $7.50 total new Jev API spend during this work, using the supplied key. | User explicitly authorized spending and as many calls as needed within the dollar cap. Supersedes request-count proposals and D15's pending-budget note. Track usage and do not exceed the cap. No other paid provider is authorized. |
+| D17 | Commit and push the completed Jev source checkpoint to the existing GitHub repository. | User said "push this to repo" on 21 October. Publish source, tests, editable fixtures/templates and docs; keep credentials, environments, caches and generated experiment/gallery artifacts local/ignored. No new experiment or upstream edits. |
 
 Nihar owns consequential ambiguities; routine local implementation choices do not
 require an approval ceremony. Approval of D02/D03 did not approve all mentor ideas.
@@ -357,10 +898,15 @@ require an approval ceremony. Approval of D02/D03 did not approve all mentor ide
 
 ## Pending research proposals, not current blockers
 
-Selection priorities/contact exemptions; Jev-selected calibrated margins;
-additional primitives and broader mesh/perception coverage evaluation; new reaching/pushing or
-manipulation tasks; once/repeated Jev and thinking-model comparisons; gallery and
-expanded replay/viewing workflow; adaptive gains; optional ponytail tooling/style.
+Learned body/contact selection beyond the current task-defined masks; Jev-selected
+calibrated margins; additional primitives and broader mesh/perception coverage
+evaluation; candidate grasp/lift-reference clearance features; broader
+once/repeated Jev and thinking-model comparisons; reliable conditional constraint
+dropping beyond the current demonstrations; compact QP dimensions rather than
+masked slots; adaptive gains; optional ponytail tooling/style. Static pickup
+selection/contact handling, six-method comparisons and synchronized viewing are
+already implemented, not pending infrastructure. The simple geometric rule is an
+important baseline for deciding which future semantic inputs add real value.
 Ground-truth inputs initially and later perception replacement are already part
 of the project direction, not a requirement to implement perception now.
 
@@ -482,7 +1028,83 @@ Decide relevant questions with Nihar when the corresponding step is chosen.
   patterns. `.env.local`, caches/environments, and generated reports were not
   committed. The three upstream repositories were not changed.
 
-The completed implementation checkpoint is published. Controller integration is
-still proposed, not approved or implemented.
+- 20 October 2026: Nihar approved continuing through the static comparison and
+  review gallery. Inspected upstream APIs and found proxy/robot context mismatch;
+  reported it and retained the valid default Panda state rather than initialize
+  from an unvalidated IK fit. Added simulation-only adapters, independent
+  collision/QP diagnostics, tests, and APNG/HTML rendering with no new packages.
+  A 10-step smoke run and three full six-second comparisons completed. Fixed an
+  initialization-timing logging issue; repeat trajectories match exactly. The
+  scene is easy: all modes succeed, so no safety benefit is established. No
+  additional service calls, prompt/gain/scene tuning, upstream changes, commits,
+  or push. Ready for the agreed human review, not the full online experiment.
+- 20 October 2026: final real-mesh positive control exposed the distance-query
+  zero-overlap issue. Added contact-depth/nonpositive-distance handling and
+  rechecked existing states without changing rollout results. All 51 tests now
+  pass, including fixed/moving-link overlap controls and exact protection parity;
+  100-step native viewer smoke exited 0. Review images inspected from generated
+  simulation data. Human review remains pending; no further features started.
+- 20 October 2026: Nihar reviewed all three animations and said they look good and
+  normal. Marked the static comparison checkpoint complete, including user visual
+  review. Similar behavior is expected in this easy scene; this does not establish
+  a safety benefit or approve new scene/model experiments, API calls, or a push.
+- 20 October 2026: Nihar approved the robot-aware extended checkpoint. Built shared
+  actual-Panda request features and a phased reusable suite runner. Qualified six
+  layouts before answers, retained the rejected unqueried draft, froze inputs,
+  completed 12 physical baselines, made exactly six new SDK invocations, and ran
+  six saved-selection rollouts. Added a combined labeled APNG/HTML gallery and
+  seven tests (58 total). Jev reduces pair counts and has no sampled native
+  contacts, but matches all-on's two successful cases and four negative scene
+  barriers. Recorded a same-state dynamics mismatch without changing the original
+  controller/simulator. Ready for human review; no additional calls or features.
+- 20 October 2026: Nihar accepted the robot-aware gallery's visual-review
+  checkpoint with "yes it looks good" after a guided comparison. Recorded visual
+  acceptance only; the negative modeled barriers, stopped-short runs, and dynamics
+  mismatch remain unresolved. No further implementation, experiment, API call,
+  commit, or push authorized by this review.
+- 21 October 2026: Nihar explicitly authorized autonomous work through the final
+  showcase, including diagnosis/fixes and continual selection. Isolated the XML/
+  URDF dynamics mismatch and sampled-hold error; added an explicit idealized plant
+  and a scene inequality guard without upstream edits. Replayed all six static
+  scenes (18 runs), retaining blocked-goal failures; all 12 constrained replays
+  have nonnegative modeled barriers. Implemented runtime parameterization,
+  obstacle-velocity RD2 terms, background selection, admissible updates, and two
+  frozen dynamic fixtures. Four baselines plus four live-selected rollouts
+  completed; all 12 planned SDK invocations succeeded. Repeated selection avoids
+  the approaching-object contact seen in one-shot handoff, but does not drop
+  previous obstacles later. Added hash-bound collision re-audits for the mocap
+  exclusion fix, synchronized playback, and tests (71 passing). Retained original
+  data and every answer/failure. Final showcase ready; no commit/push or hardware.
+
+- 21 October 2026: implemented the approved static-clutter pickup package and
+  follow-on study. Native articulated fingers grasp/lift a free target; original
+  FRAX nominal torque math and all upstream worktrees remain unchanged. Added
+  contact-aware masks, independent success/contact audits, shape-aware covers,
+  deterministic and geometry-only baselines, editable prompt comparisons,
+  profiling, replay, source snapshots and synchronized six-method playback.
+  Retained the original difficult posture, invalid offline generator drafts,
+  original held-out outcomes and failed decoder-only replay. Corrected rounded-
+  probability decoding and the high-level grasp sequence, then reran all six
+  methods on the same 12 layouts, explicitly not a new unseen benchmark.
+  Repeated/all/rule achieve 12/12 safe pickups; once/geometry 6/12; off 11/12.
+  The geometric rule uses tighter covers/fewer enabled pairs than repeated Jev;
+  fixed allocated QP dimensions do not shrink. All 72 corrected native audits,
+  89 offline tests, 908 local links, 12-layout playback checks, credential checks,
+  source archives and no-new-call completed resumes pass. Total new logical
+  requests 114, estimated token cost $0.067044516, conservative reservations
+  $0.941359104 against $7.50. No additional experiment is running or needed for
+  the completed package. No hardware/perception, commit or push.
+
+- 21 October 2026: Nihar requested committing/pushing the completed work to the
+  existing Jev repository (D17). Re-ran all 89 offline tests successfully in
+  28.474 s, with no live API calls. Fetched origin; local/remote main initially
+  match at `f432eef`. Preparing the source/test/fixture/documentation publication;
+  credentials, environments, caches and generated evidence remain local/ignored.
+
+The completed viewer checkpoint is published. Subsequent static/dynamic reaching
+infrastructure and the current pickup/follow-on package are complete, and Nihar
+has requested their publication. The last verified published checkpoint is
+`f432eef` until the new push is confirmed. The current local review entry is
+`artifacts/pickup/review/index.html`; generated gallery files are not in Git.
 The deleted stale parent architecture copy remains recoverable from the
 repository's original commit `b347afe`.

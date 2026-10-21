@@ -1,0 +1,29 @@
+{
+  "description": "Two scripted ground-truth dynamic reaching fixtures. World poses are continuous and piecewise constant-velocity; future motion scripts and scene titles are not passed to Jev. Frozen before any new model answer.",
+  "duration_s": 12.0,
+  "control_dt_s": 0.002,
+  "query_period_s": 2.0,
+  "forecast_horizon_s": 3.0,
+  "goal_m": [0.60, 0.0, 0.06],
+  "model_profile": "frax",
+  "scene_guard_m_s2": 0.05,
+  "scenes": [
+    {
+      "id": "incoming",
+      "title": "A distant object approaches, then leaves",
+      "objects": [
+        {"id": "object_a", "shape": "box", "size_m": [0.06, 0.06, 0.12], "center_m": [0.60, -0.28, 0.10], "motion": [{"start_s": 2.0, "end_s": 6.0, "velocity_m_s": [0.0, 0.06, 0.0]}, {"start_s": 7.0, "end_s": 11.0, "velocity_m_s": [0.0, -0.06, 0.0]}]},
+        {"id": "object_b", "shape": "box", "size_m": [0.08, 0.08, 0.08], "center_m": [0.25, 0.45, 0.04]}
+      ]
+    },
+    {
+      "id": "handoff",
+      "title": "One obstacle leaves while another approaches",
+      "objects": [
+        {"id": "object_a", "shape": "box", "size_m": [0.08, 0.08, 0.20], "center_m": [0.52, -0.08, 0.10], "motion": [{"start_s": 2.0, "end_s": 5.0, "velocity_m_s": [0.0, -0.09, 0.0]}]},
+        {"id": "object_b", "shape": "box", "size_m": [0.06, 0.06, 0.12], "center_m": [0.60, 0.28, 0.10], "motion": [{"start_s": 4.0, "end_s": 8.0, "velocity_m_s": [0.0, -0.06, 0.0]}, {"start_s": 8.0, "end_s": 11.0, "velocity_m_s": [0.0, 0.08, 0.0]}]},
+        {"id": "object_c", "shape": "box", "size_m": [0.08, 0.08, 0.08], "center_m": [0.25, 0.45, 0.04]}
+      ]
+    }
+  ]
+}

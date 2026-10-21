@@ -1,0 +1,630 @@
+{
+  "settings": {},
+  "shape_aware_geometry": true,
+  "scenes": [
+    {
+      "id": "layout_00",
+      "target_id": "target_object",
+      "objects": [
+        {
+          "id": "target_object",
+          "description": "Designated cylindrical pickup target.",
+          "shape": "cylinder",
+          "size_m": [
+            0.044,
+            0.044,
+            0.12
+          ],
+          "center_m": [
+            0.5674123354189318,
+            -0.1383429560442774,
+            0.06
+          ],
+          "mass_kg": 0.05
+        },
+        {
+          "id": "bottle_a",
+          "description": "Stationary tabletop cylinder.",
+          "shape": "cylinder",
+          "size_m": [
+            0.05,
+            0.05,
+            0.38
+          ],
+          "center_m": [
+            0.34463276160335726,
+            -0.007572850325661629,
+            0.19
+          ]
+        },
+        {
+          "id": "box_b",
+          "description": "Stationary tabletop box.",
+          "shape": "box",
+          "size_m": [
+            0.08,
+            0.08,
+            0.08
+          ],
+          "center_m": [
+            0.65,
+            0.28,
+            0.04
+          ]
+        }
+      ]
+    },
+    {
+      "id": "layout_01",
+      "target_id": "target_object",
+      "objects": [
+        {
+          "id": "target_object",
+          "description": "Designated cylindrical pickup target.",
+          "shape": "cylinder",
+          "size_m": [
+            0.044,
+            0.044,
+            0.12
+          ],
+          "center_m": [
+            0.5240100455013202,
+            0.14442817504469274,
+            0.06
+          ],
+          "mass_kg": 0.05
+        },
+        {
+          "id": "bottle_a",
+          "description": "Stationary tabletop cylinder.",
+          "shape": "cylinder",
+          "size_m": [
+            0.05,
+            0.05,
+            0.38
+          ],
+          "center_m": [
+            0.4756554593391948,
+            -0.06471844514580105,
+            0.19
+          ]
+        },
+        {
+          "id": "box_b",
+          "description": "Stationary tabletop box.",
+          "shape": "box",
+          "size_m": [
+            0.08,
+            0.08,
+            0.08
+          ],
+          "center_m": [
+            0.65,
+            -0.28,
+            0.04
+          ]
+        }
+      ]
+    },
+    {
+      "id": "layout_02",
+      "target_id": "target_object",
+      "objects": [
+        {
+          "id": "target_object",
+          "description": "Designated cylindrical pickup target.",
+          "shape": "cylinder",
+          "size_m": [
+            0.044,
+            0.044,
+            0.12
+          ],
+          "center_m": [
+            0.5283293135852811,
+            0.15755547369711248,
+            0.06
+          ],
+          "mass_kg": 0.05
+        },
+        {
+          "id": "bottle_a",
+          "description": "Stationary tabletop cylinder.",
+          "shape": "cylinder",
+          "size_m": [
+            0.05,
+            0.05,
+            0.38
+          ],
+          "center_m": [
+            0.43335222163683323,
+            -0.0056765067609707565,
+            0.19
+          ]
+        },
+        {
+          "id": "box_b",
+          "description": "Stationary tabletop box.",
+          "shape": "box",
+          "size_m": [
+            0.08,
+            0.08,
+            0.08
+          ],
+          "center_m": [
+            0.65,
+            -0.28,
+            0.04
+          ]
+        }
+      ]
+    },
+    {
+      "id": "layout_03",
+      "target_id": "target_object",
+      "objects": [
+        {
+          "id": "target_object",
+          "description": "Designated cylindrical pickup target.",
+          "shape": "cylinder",
+          "size_m": [
+            0.044,
+            0.044,
+            0.12
+          ],
+          "center_m": [
+            0.5428877968641466,
+            0.06190707056716256,
+            0.06
+          ],
+          "mass_kg": 0.05
+        },
+        {
+          "id": "bottle_a",
+          "description": "Stationary tabletop cylinder.",
+          "shape": "cylinder",
+          "size_m": [
+            0.05,
+            0.05,
+            0.38
+          ],
+          "center_m": [
+            0.3189658149179664,
+            0.04303016946676402,
+            0.19
+          ]
+        },
+        {
+          "id": "box_b",
+          "description": "Stationary tabletop box.",
+          "shape": "box",
+          "size_m": [
+            0.08,
+            0.08,
+            0.08
+          ],
+          "center_m": [
+            0.65,
+            -0.28,
+            0.04
+          ]
+        }
+      ]
+    },
+    {
+      "id": "layout_04",
+      "target_id": "target_object",
+      "objects": [
+        {
+          "id": "target_object",
+          "description": "Designated cylindrical pickup target.",
+          "shape": "cylinder",
+          "size_m": [
+            0.044,
+            0.044,
+            0.12
+          ],
+          "center_m": [
+            0.47798895282168735,
+            -0.026288222230095217,
+            0.06
+          ],
+          "mass_kg": 0.05
+        },
+        {
+          "id": "bottle_a",
+          "description": "Stationary tabletop cylinder.",
+          "shape": "cylinder",
+          "size_m": [
+            0.05,
+            0.05,
+            0.26
+          ],
+          "center_m": [
+            0.3501253390408275,
+            0.12420148415948618,
+            0.13
+          ]
+        },
+        {
+          "id": "box_b",
+          "description": "Stationary tabletop box.",
+          "shape": "box",
+          "size_m": [
+            0.08,
+            0.08,
+            0.08
+          ],
+          "center_m": [
+            0.65,
+            0.28,
+            0.04
+          ]
+        }
+      ]
+    },
+    {
+      "id": "layout_05",
+      "target_id": "target_object",
+      "objects": [
+        {
+          "id": "target_object",
+          "description": "Designated cylindrical pickup target.",
+          "shape": "cylinder",
+          "size_m": [
+            0.044,
+            0.044,
+            0.12
+          ],
+          "center_m": [
+            0.5764996737824566,
+            -0.03440129354379273,
+            0.06
+          ],
+          "mass_kg": 0.05
+        },
+        {
+          "id": "bottle_a",
+          "description": "Stationary tabletop cylinder.",
+          "shape": "cylinder",
+          "size_m": [
+            0.05,
+            0.05,
+            0.38
+          ],
+          "center_m": [
+            0.34029169875232224,
+            0.023764478413545898,
+            0.19
+          ]
+        },
+        {
+          "id": "box_b",
+          "description": "Stationary tabletop box.",
+          "shape": "box",
+          "size_m": [
+            0.08,
+            0.08,
+            0.08
+          ],
+          "center_m": [
+            0.65,
+            0.28,
+            0.04
+          ]
+        }
+      ]
+    },
+    {
+      "id": "layout_06",
+      "target_id": "target_object",
+      "objects": [
+        {
+          "id": "target_object",
+          "description": "Designated cylindrical pickup target.",
+          "shape": "cylinder",
+          "size_m": [
+            0.044,
+            0.044,
+            0.12
+          ],
+          "center_m": [
+            0.48035622320445054,
+            -0.1544717170102753,
+            0.06
+          ],
+          "mass_kg": 0.05
+        },
+        {
+          "id": "bottle_a",
+          "description": "Stationary tabletop cylinder.",
+          "shape": "cylinder",
+          "size_m": [
+            0.05,
+            0.05,
+            0.38
+          ],
+          "center_m": [
+            0.32779555736592775,
+            0.05286817334513261,
+            0.19
+          ]
+        },
+        {
+          "id": "box_b",
+          "description": "Stationary tabletop box.",
+          "shape": "box",
+          "size_m": [
+            0.08,
+            0.08,
+            0.08
+          ],
+          "center_m": [
+            0.65,
+            0.28,
+            0.04
+          ]
+        }
+      ]
+    },
+    {
+      "id": "layout_07",
+      "target_id": "target_object",
+      "objects": [
+        {
+          "id": "target_object",
+          "description": "Designated cylindrical pickup target.",
+          "shape": "cylinder",
+          "size_m": [
+            0.044,
+            0.044,
+            0.12
+          ],
+          "center_m": [
+            0.5171966389823753,
+            0.018672504705222543,
+            0.06
+          ],
+          "mass_kg": 0.05
+        },
+        {
+          "id": "bottle_a",
+          "description": "Stationary tabletop cylinder.",
+          "shape": "cylinder",
+          "size_m": [
+            0.05,
+            0.05,
+            0.14
+          ],
+          "center_m": [
+            0.5404260334169398,
+            -0.12608351531240475,
+            0.07
+          ]
+        },
+        {
+          "id": "box_b",
+          "description": "Stationary tabletop box.",
+          "shape": "box",
+          "size_m": [
+            0.08,
+            0.08,
+            0.08
+          ],
+          "center_m": [
+            0.65,
+            -0.28,
+            0.04
+          ]
+        }
+      ]
+    },
+    {
+      "id": "layout_08",
+      "target_id": "target_object",
+      "objects": [
+        {
+          "id": "target_object",
+          "description": "Designated cylindrical pickup target.",
+          "shape": "cylinder",
+          "size_m": [
+            0.044,
+            0.044,
+            0.12
+          ],
+          "center_m": [
+            0.4597276435119956,
+            0.11247844702707038,
+            0.06
+          ],
+          "mass_kg": 0.05
+        },
+        {
+          "id": "bottle_a",
+          "description": "Stationary tabletop cylinder.",
+          "shape": "cylinder",
+          "size_m": [
+            0.05,
+            0.05,
+            0.38
+          ],
+          "center_m": [
+            0.45466391962916947,
+            -0.066956645246389,
+            0.19
+          ]
+        },
+        {
+          "id": "box_b",
+          "description": "Stationary tabletop box.",
+          "shape": "box",
+          "size_m": [
+            0.08,
+            0.08,
+            0.08
+          ],
+          "center_m": [
+            0.65,
+            -0.28,
+            0.04
+          ]
+        }
+      ]
+    },
+    {
+      "id": "layout_09",
+      "target_id": "target_object",
+      "objects": [
+        {
+          "id": "target_object",
+          "description": "Designated cylindrical pickup target.",
+          "shape": "cylinder",
+          "size_m": [
+            0.044,
+            0.044,
+            0.12
+          ],
+          "center_m": [
+            0.4962417139585898,
+            -0.13201839614422237,
+            0.06
+          ],
+          "mass_kg": 0.05
+        },
+        {
+          "id": "bottle_a",
+          "description": "Stationary tabletop cylinder.",
+          "shape": "cylinder",
+          "size_m": [
+            0.05,
+            0.05,
+            0.38
+          ],
+          "center_m": [
+            0.3290481270140628,
+            0.0608249594001915,
+            0.19
+          ]
+        },
+        {
+          "id": "box_b",
+          "description": "Stationary tabletop box.",
+          "shape": "box",
+          "size_m": [
+            0.08,
+            0.08,
+            0.08
+          ],
+          "center_m": [
+            0.65,
+            0.28,
+            0.04
+          ]
+        }
+      ]
+    },
+    {
+      "id": "layout_10",
+      "target_id": "target_object",
+      "objects": [
+        {
+          "id": "target_object",
+          "description": "Designated cylindrical pickup target.",
+          "shape": "cylinder",
+          "size_m": [
+            0.044,
+            0.044,
+            0.12
+          ],
+          "center_m": [
+            0.49684423026381336,
+            0.013329698174685092,
+            0.06
+          ],
+          "mass_kg": 0.05
+        },
+        {
+          "id": "bottle_a",
+          "description": "Stationary tabletop cylinder.",
+          "shape": "cylinder",
+          "size_m": [
+            0.05,
+            0.05,
+            0.26
+          ],
+          "center_m": [
+            0.426461316582443,
+            0.16171251597536107,
+            0.13
+          ]
+        },
+        {
+          "id": "box_b",
+          "description": "Stationary tabletop box.",
+          "shape": "box",
+          "size_m": [
+            0.08,
+            0.08,
+            0.08
+          ],
+          "center_m": [
+            0.65,
+            -0.28,
+            0.04
+          ]
+        }
+      ]
+    },
+    {
+      "id": "layout_11",
+      "target_id": "target_object",
+      "objects": [
+        {
+          "id": "target_object",
+          "description": "Designated cylindrical pickup target.",
+          "shape": "cylinder",
+          "size_m": [
+            0.044,
+            0.044,
+            0.12
+          ],
+          "center_m": [
+            0.5088482707251446,
+            -0.07439573034695154,
+            0.06
+          ],
+          "mass_kg": 0.05
+        },
+        {
+          "id": "bottle_a",
+          "description": "Stationary tabletop cylinder.",
+          "shape": "cylinder",
+          "size_m": [
+            0.05,
+            0.05,
+            0.14
+          ],
+          "center_m": [
+            0.49161500334931685,
+            -0.2170551576467294,
+            0.07
+          ]
+        },
+        {
+          "id": "box_b",
+          "description": "Stationary tabletop box.",
+          "shape": "box",
+          "size_m": [
+            0.08,
+            0.08,
+            0.08
+          ],
+          "center_m": [
+            0.65,
+            0.28,
+            0.04
+          ]
+        }
+      ]
+    }
+  ]
+}

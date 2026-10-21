@@ -128,6 +128,11 @@ class SceneTests(unittest.TestCase):
             self.assertEqual(geom.type, mujoco.mjtGeom.mjGEOM_LABEL)
             self.assertEqual(geom.label, text)
             np.testing.assert_allclose(geom.pos, position)
+        first_label = visual_scene.geoms[0].label
+        add_scene_labels(visual_scene, [("appended label", [1, 2, 3])], append=True)
+        self.assertEqual(visual_scene.ngeom, 6)
+        self.assertEqual(visual_scene.geoms[0].label, first_label)
+        self.assertEqual(visual_scene.geoms[5].label, "appended label")
         with self.assertRaises(ValueError):
             add_scene_labels(mujoco.MjvScene(model, maxgeom=1), scene["labels"])
 
