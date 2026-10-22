@@ -26,6 +26,8 @@ implementation checklist. Follow the user's latest directions if they differ.
   credentials and environments excluded, and upstreams read-only. This publishes
   D22-D24 planning, not implementation or validation of the new experiment.
   No refactoring, new run/provider call, hardware access or installation is in scope.
+  Plan/handoff commit `a55d3dd` has been pushed to `origin/main` and the remote
+  hash verified. No experimental implementation was started during publication.
 - Current direction (21 October; D22): planning only for the next experiment
   revision. Record the five agreed comparisons, unchanged current-off semantics,
   proposed 1 ms simulation/control step, independent completion-driven Jev loop

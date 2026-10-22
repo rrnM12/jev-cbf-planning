@@ -4,7 +4,7 @@ Updated: 21 October 2026.
 
 ## Current checkpoint
 
-### Revision-plan publication requested (D25)
+### Revision plan published for engineer handoff (D25)
 
 On 21 October, Nihar requested pushing the latest plan so another engineer can
 work from the current repository. This is a documentation-only publication of
@@ -12,6 +12,13 @@ AGENTS.md, ARCHITECTURE.md and PROGRESS.md on top of published `50c47fa`.
 The five comparisons, 1 kHz target, revised Jev scheduling, perception changes,
 adaptive sphere fitting and new three-scene checkpoint remain unimplemented.
 No source refactoring, new experiment, API call or hardware work is included.
+Plan/handoff commit `a55d3dd37d304add63c974b1f7fe5bc715f26c72` was pushed
+successfully to `origin/main` and independently verified with `git ls-remote`.
+The three staged Markdown files passed whitespace and configured-credential
+checks; all upstream worktrees remained clean and the provider ledger unchanged.
+No runtime tests were rerun for this documentation-only update; the last verified
+implementation checkpoint has 117 passing tests. This publication-status note
+is a documentation-only follow-up, not an implementation change.
 
 ### Revision plan agreed in discussion (D22-D24; not implemented)
 
