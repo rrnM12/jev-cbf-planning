@@ -2,6 +2,17 @@
 
 Status: a living research plan, not a frozen implementation specification.
 
+D29 completed the scene-difficulty correction: one/two/three clutter obstacles for
+easy/medium/hard, with the pickup target counted separately. The earlier D26/D27
+datasets have 2/2/3 obstacles and remain historical evidence. The fixture removes
+easy's distant box; preparation checks declared plant counts without feeding
+them into perception/control. Review `artifacts/rgbd/count123_startup_v1/index.html`
+and `artifacts/rgbd/count123_repeated_v1/index.html`: all startup and repeated
+comparisons are complete, both adaptive variants achieve 3/3 safe pickups, and
+single-sphere variants stall. 131 tests plus native audits and offline playback
+checks pass. PROGRESS.md records the preserved history, actual timing, request
+latency and unchanged cumulative spending cap.
+
 D27 repeated comparison is complete locally: `rgbd_repeated.py` derives a new,
 hash-bound run from the completed startup-only gallery, preserving its exact
 geometry, scenes and initial answers. The three Jev ablations each run repeated

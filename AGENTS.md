@@ -19,6 +19,22 @@ implementation checklist. Follow the user's latest directions if they differ.
 
 ## Work one checkpoint at a time
 
+- Active correction (22 October; D29): Nihar requires exactly one/two/three
+  clutter obstacles in easy/medium/hard, excluding the pickup target. Correct
+  the fixture, validate/display counts and rerun qualifications plus startup
+  and repeated comparisons in fresh folders. Preserve the old 2/2/3 datasets
+  and label them historical. This supersedes the D27 experiment stop for this
+  correction only. Keep existing contact assumptions, provider/model, original
+  cumulative $7.50 cap, read-only upstreams and all other experiment settings.
+  No hardware, new paid service or dependency change. Publish the verified source
+  correction under the existing D28 push request, excluding generated evidence
+  and credentials as before.
+  D29 is complete: `artifacts/rgbd/count123_startup_v1/index.html` and
+  `artifacts/rgbd/count123_repeated_v1/index.html`. All 15 startup and nine
+  repeated runs finished; 131 tests pass. The original ledger is at 595 calls
+  and $4.913233920 reservations against $7.50. Prior 2/2/3 results remain intact.
+  No further experiment or provider call follows this completed correction.
+
 - Publication authorization (22 October; D28): Nihar requested pushing the
   completed D26/D27 work to the existing GitHub repository. Commit and push the
   RGBD/adaptive-cover and repeated-Jev source, tests, scene/prompt fixtures,

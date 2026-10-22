@@ -131,6 +131,7 @@ def schedule_table(folder, *, scene=None):
 def render_case(case, robot, mj, settings):
     repeated = read(case.parent/'manifest.json').get('query_schedule') == 'completion_driven_repeated'
     scene = read(case/'scene.json')
+    clutter_count = sum(obj['id'] != scene['target_id'] for obj in scene['objects'])
     initial_estimate = read(case/'estimate.json')
     object_labels = {}
     for native in scene['objects']:
@@ -209,7 +210,7 @@ def render_case(case, robot, mj, settings):
             if e.get('kind') == 'selection':
                 events.append(f'<tr><td>{method}</td><td>{html.escape(e["status"])}</td><td>{html.escape(str(e.get("policy")))}</td><td>{html.escape(str(e.get("error", "")))}</td></tr>')
     (case/'index.html').write_text(f'''<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{case.name} RGBD pickup</title><style>{STYLE}</style><main>
-    <a href="../index.html">← Three-scene gallery</a><h1>{case.name.capitalize()} · RGBD pickup</h1><p>Orange T = target; cyan C1/C2/C3 = observed_00/01/02 clutter tracks; translucent gold = enabled covers; magenta = hand path. Display matching to the native plant is offline evaluation only. Frames share one simulation clock; ended methods hold their last frame.</p>
+    <a href="../index.html">← Three-scene gallery</a><h1>{case.name.capitalize()} · {clutter_count} clutter obstacle{'s' if clutter_count != 1 else ''} + pickup target</h1><p>Configured obstacle counts exclude the target. RGBD estimated {len(initial_estimate['objects'])-1} clutter tracks; configured counts are shown for inspection and are not passed into perception/control. Orange T = target; cyan C1/C2/C3 = observed_00/01/02 clutter tracks; translucent gold = enabled covers; magenta = hand path. Display matching to the native plant is offline evaluation only. Frames share one simulation clock; ended methods hold their last frame.</p>
     <div class="controls"><button id="play">Pause</button><button id="restart">Restart</button><input id="scrub" aria-label="Simulation time" type="range" min="0" max="{len(times)-1}" value="0"><span id="clock"></span><select id="speed" aria-label="Playback speed"><option value="1">1×</option><option value=".5">0.5×</option><option value=".25">0.25×</option></select></div>
     <div class="cards">{''.join(cards)}</div><table><tr><th>Method</th><th>Collision</th><th>Pickup</th><th>Safe pickup</th><th>Clutter pairs mean/peak</th><th>Cost: provider + runtime</th></tr>{''.join(rows)}</table>
     <p>Pickup and collision are independently scored from native simulation after control. The observer's stop flag is separate. A collision-free stall is a failed pickup. Negative modeled barriers remain failures in detailed task_success even if the physical safe-pickup conjunction passes. QP allocation stays fixed.</p>
@@ -237,7 +238,9 @@ def gallery(folder):
         summary[name] = results; total_cost += api['reported_estimated_usd']
         new_cost += api['new_estimated_usd']; new_calls += api['new_calls']
         rows = ''.join(f'<tr><td>{METHODS[m]}</td><td>{r["unwanted_collision"] if r["unwanted_collision"] is not None else "Unmeasured"}</td><td>{r["pickup_success"]}</td><td>{r["safe_pickup"]}</td><td>{str(round(r["cbf_counts"]["clutter_pairs_mean"])) if "cbf_counts" in r else "Refused"}</td></tr>' for m, r in results.items())
-        cards.append(f'<article><h2><a href="{name}/index.html">{name.capitalize()} → synchronized playback</a></h2><table><tr><th>Method</th><th>Collision</th><th>Pickup</th><th>Safe pickup</th><th>Clutter CBFs</th></tr>{rows}</table></article>')
+        scene = read(folder/name/'scene.json')
+        clutter_count = sum(obj['id'] != scene['target_id'] for obj in scene['objects'])
+        cards.append(f'<article><h2><a href="{name}/index.html">{name.capitalize()} · {clutter_count} clutter obstacle{"s" if clutter_count != 1 else ""} + pickup target → synchronized playback</a></h2><table><tr><th>Method</th><th>Collision</th><th>Pickup</th><th>Safe pickup</th><th>Clutter CBFs</th></tr>{rows}</table></article>')
     save(folder/'review_results.json', dict(cases=summary, manifest=manifest, provider_estimated_usd=total_cost+new_cost,
          startup_provider_estimated_usd=total_cost, additional_repeated_provider_estimated_usd=new_cost,
          additional_repeated_calls=new_calls))

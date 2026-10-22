@@ -4,6 +4,65 @@ Updated: 22 October 2026.
 
 ## Current checkpoint
 
+### Corrected one/two/three-obstacle comparison complete (D29)
+
+Current galleries: `artifacts/rgbd/count123_startup_v1/index.html` and
+`artifacts/rgbd/count123_repeated_v1/index.html`. Nihar clarified that easy must
+have one clutter obstacle, medium two, hard three; the pickup target is separate.
+Easy now has the post only; medium has post + box; hard has post + box + bar.
+The earlier D26/D27 layouts actually had 2/2/3 clutter objects and remain intact
+as historical evidence, not results for the corrected difficulty definition.
+
+The default fixture declares 1/2/3 counts. Preparation checks declarations before
+perception or calls; configured counts never supply an oracle inventory to
+perception/control. Independent RGBD surveys also estimated exactly 1/2/3 clutter
+tracks. Gallery headings explicitly distinguish obstacles from the target.
+Only easy's distant box was removed; target, post poses, medium and hard geometry,
+controller, contact policy, model, prompts and worker limits were unchanged.
+
+All three scenes passed offline qualification: initial physical separation,
+actual off-mode collision, and a safe deterministic adaptive-cover witness.
+Fresh runs completed all 15 startup conditions and nine repeated Jev conditions:
+
+| Condition | Startup safe pickups | Repeated safe pickups |
+| --- | --- | --- |
+| Scene CBFs off | 0/3 (all collide) | Same baseline reused |
+| All clutter / single sphere | 0/3 (all stall) | Same baseline reused |
+| All clutter / Jev geometry | 3/3 | 3/3 |
+| Jev objects / single sphere | 0/3 (all stall) | 0/3 (all stall) |
+| Jev objects / Jev geometry | 3/3 | 3/3 |
+
+Each repeated rollout shares its scene's new startup answer and queries its own
+measured state. There were 14 accepted policy changes after startup, no invalid
+responses, and four late responses retained without application. No unwanted
+collision occurred in the nine repeated runs. Request starts remained at least
+527 ms apart with one request in flight. Achieved rates were 0.854–1.877 Hz;
+slower hard-scene request durations (up to 1.168 s) naturally limited the
+completion-driven loop. This is a 2 Hz ceiling, not a guaranteed request rate.
+No sampled modeled h2 was negative. Single-sphere stalls remain failures.
+
+131 offline tests passed (58.428 s), including exact default obstacle counts and
+refusal before perception on a mismatched count declaration. Both galleries pass
+native trajectory audits and offline playback/count-label/atlas-bound checks;
+final frames were inspected. Native audit covers each gallery's 15 conditions
+plus three qualification witnesses, with repeated non-Jev baselines/witnesses
+explicitly inherited rather than counted as new trials. Frozen inputs/current
+producer sources match, original 2/2/3 evidence is unchanged, configured-key scans
+are clear, upstreams are clean, and completed resumes make no new call/rollout.
+No live-browser, hardware, hard real-time or generalization claim is made.
+
+Existing credentials were loaded without printing them and the original ledger
+was checked before calls. This correction adds three startup and 93 repeated
+requests: 96 logical calls, $0.068243616 estimated usage and $0.792723456
+conservative reservations. Cumulative totals are 595 calls, $0.534521820 estimated
+usage and $4.913233920 reservations against the unchanged $7.50 cap. Official
+pricing was rechecked on 22 October; `jev-1.13.0` and all services are unchanged.
+
+Publish the verified source correction under the existing D28 repository-push
+request; generated evidence, credentials and the cumulative ledger stay ignored
+and local. No new service, hardware, dependency or upstream change. The corrected
+comparison is complete; no further experiment or paid call follows automatically.
+
 ### RGBD and repeated-Jev source publication (D28)
 
 On 22 October, Nihar requested pushing the completed work to the existing

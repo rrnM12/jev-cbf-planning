@@ -7,24 +7,29 @@ Source, tests and fixtures are included in the repository; generated galleries,
 trajectories and provider records are ignored local evidence and are not included
 in a fresh clone.
 
-Open the completed local gallery at
-[`artifacts/rgbd/gallery_v2/index.html`](artifacts/rgbd/gallery_v2/index.html).
-All 15 runs are complete: adaptive Jev geometry gives 3/3 safe pickups, both
-single-sphere conditions stall, and off mode collides in all three scenes.
-Deterministic adaptive qualification witnesses also succeed; no unique Jev
-superiority is established. 125 regression tests and 19 independent trajectory
-audits pass. Timing overruns and the simple color/shape-completion assumptions
-remain visible in the report. No hardware or hard real-time guarantee is claimed.
+Difficulty is **clutter obstacle count, excluding the pickup target**:
+easy = one post; medium = post + box; hard = post + box + bar. Preparation
+validates the declared 1/2/3 counts; gallery headings show them explicitly.
 
-The repeated comparison is also complete at
-[`artifacts/rgbd/repeated_v1/index.html`](artifacts/rgbd/repeated_v1/index.html):
-nine new rollouts covering all three Jev conditions on all three scenes, paired
-to the exact prior inputs and startup answers. Repeated updates preserve the
-same pickup outcomes, with 19 accepted policy changes and higher mean enabled
-pair counts on medium/hard. All new trajectories pass independent native audit;
-129 preflight tests pass. The 115 new requests cost an estimated $0.092273. One
-invalid late answer is retained and never applied; no re-query occurred. The
-non-Jev baseline runs are reused, not additional experimental trials.
+Open the corrected local galleries:
+
+- [Startup-only: five methods × three scenes](artifacts/rgbd/count123_startup_v1/index.html).
+- [Repeated Jev: three Jev methods × three scenes](artifacts/rgbd/count123_repeated_v1/index.html), with the two non-Jev baselines reused.
+
+All 15 startup and nine repeated runs are complete. In each setting, off mode
+picks up but collides; single-sphere methods stall; both adaptive Jev conditions
+pick up safely. Repeated querying makes 14 accepted policy changes but does not
+improve pickup outcomes. 131 tests pass, plus native trajectory audits and offline
+playback/count-label checks. Four late answers were retained without application;
+no invalid response or re-query occurred. The correction adds an estimated
+$0.068244 usage, with cumulative reservations $4.913234 against the same $7.50 cap.
+Deterministic adaptive qualification witnesses also succeed; unique Jev
+superiority, hardware operation and hard real-time execution are not established.
+
+Historical [startup](artifacts/rgbd/gallery_v2/index.html) and
+[repeated](artifacts/rgbd/repeated_v1/index.html) galleries used **2/2/3** obstacles.
+They are preserved separately and should not be presented as the corrected
+one/two/three-obstacle comparison.
 
 The revision uses color components estimated from RGB and calibrated metric depth
 for the target and clutter. A supported convex-footprint extrusion is an explicit
@@ -67,11 +72,11 @@ conditions on all three scenes. The two non-Jev conditions are reused baselines.
 Prepare before running; completed attempts are never replaced or re-queried:
 
 ```bash
-uv run --offline --frozen --cache-dir .uv-cache python -B rgbd_repeated.py prepare --output artifacts/rgbd/repeated_v1 --reference artifacts/rgbd/gallery_v2
-uv run --offline --frozen --extra jev --cache-dir .uv-cache --env-file .env.local python -B rgbd_repeated.py run --output artifacts/rgbd/repeated_v1 --live
-uv run --offline --frozen --cache-dir .uv-cache python -B rgbd_repeated.py gallery --output artifacts/rgbd/repeated_v1
-uv run --offline --frozen --cache-dir .uv-cache python -B verify_rgbd_pickup.py --output artifacts/rgbd/repeated_v1
-node tests/check_rgbd_playback.cjs artifacts/rgbd/repeated_v1
+uv run --offline --frozen --cache-dir .uv-cache python -B rgbd_repeated.py prepare --output artifacts/rgbd/count123_repeated_v1 --reference artifacts/rgbd/count123_startup_v1
+uv run --offline --frozen --extra jev --cache-dir .uv-cache --env-file .env.local python -B rgbd_repeated.py run --output artifacts/rgbd/count123_repeated_v1 --live
+uv run --offline --frozen --cache-dir .uv-cache python -B rgbd_repeated.py gallery --output artifacts/rgbd/count123_repeated_v1
+uv run --offline --frozen --cache-dir .uv-cache python -B verify_rgbd_pickup.py --output artifacts/rgbd/count123_repeated_v1
+node tests/check_rgbd_playback.cjs artifacts/rgbd/count123_repeated_v1
 ```
 
 This repository adds task-conditioned Jev constraint selection around the original

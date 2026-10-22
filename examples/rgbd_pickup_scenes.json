@@ -33,21 +33,6 @@
             0.18
           ],
           "description": "Stationary tabletop clutter."
-        },
-        {
-          "id": "box_b",
-          "shape": "box",
-          "size_m": [
-            0.08,
-            0.08,
-            0.08
-          ],
-          "center_m": [
-            0.66,
-            -0.28,
-            0.04
-          ],
-          "description": "Stationary tabletop clutter."
         }
       ]
     },
@@ -168,5 +153,10 @@
       ]
     }
   ],
-  "design_note": "Designed static-clutter demonstration, fixed before new Jev answers. Same target, progressively more intrusive observed post; hard adds another elongated clutter object. Historical failed qualifications remain in artifacts/rgbd."
+  "design_note": "Corrected 1/2/3 clutter obstacles, excluding the common pickup target. Easy: post only; medium: post plus box; hard: post, box and bar. Prior 2/2/3 evidence remains retained separately. Configured counts describe the plant fixture and never supply an inventory to perception or control.",
+  "clutter_counts": {
+    "easy": 1,
+    "medium": 2,
+    "hard": 3
+  }
 }

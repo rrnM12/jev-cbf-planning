@@ -33,6 +33,28 @@ class RGBDTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             CompletionSchedule(.49)
 
+    def test_default_difficulty_counts_exclude_the_pickup_target(self):
+        from inspect_selection import ROOT
+        from run_rgbd_pickup import configured_clutter_counts
+        from run_suite import read
+        config = read(ROOT/'examples/rgbd_pickup_scenes.json')
+        self.assertEqual(configured_clutter_counts(config), dict(easy=1, medium=2, hard=3))
+        self.assertEqual(config['clutter_counts'], dict(easy=1, medium=2, hard=3))
+
+    def test_incorrect_declared_obstacle_count_refuses_before_perception(self):
+        from unittest.mock import patch
+        from run_rgbd_pickup import prepare
+        from run_suite import save
+        config = dict(clutter_counts=dict(easy=1), scenes=[dict(id='easy', target_id='target', objects=[dict(id='target')])])
+        with tempfile.TemporaryDirectory(dir=self.temporary_root) as temp:
+            root = Path(temp)
+            save(root/'config.json', config)
+            with patch('run_rgbd_pickup.load_upstream') as load:
+                with self.assertRaisesRegex(ValueError, 'clutter counts'):
+                    prepare(root/'run', root/'config.json')
+                load.assert_not_called()
+            self.assertFalse((root/'run').exists())
+
     def test_rgb_component_inventory_and_target_missing_are_not_oracle_filled(self):
         rgb = np.zeros((30, 40, 3), np.uint8)
         rgb[8:19, 10:19] = [200, 150, 55]  # highlight remains orange

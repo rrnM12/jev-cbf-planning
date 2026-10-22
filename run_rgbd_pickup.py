@@ -33,6 +33,21 @@ SOURCES = ('adaptive_geometry.py', 'rgbd_scene.py', 'rgbd_pickup.py', 'run_rgbd_
 SETTINGS = dict(DEFAULTS, control_dt_s=.001, camera_period_s=.1, max_target_age_s=.5, scene_pair_cap=1160)
 
 
+def configured_clutter_counts(config):
+    """Validate plant fixture counts, excluding the target; never perception input."""
+    counts = {}
+    for scene in config['scenes']:
+        ids = [obj['id'] for obj in scene['objects']]
+        if len(set(ids)) != len(ids) or ids.count(scene['target_id']) != 1:
+            raise ValueError('scene objects need unique IDs and exactly one pickup target')
+        counts[scene['id']] = len(ids)-1
+    declared = config.get('clutter_counts')
+    if declared is not None:
+        if not isinstance(declared, dict) or any(type(value) is not int or value < 0 for value in declared.values()) or declared != counts:
+            raise ValueError('declared clutter counts must match non-target scene objects')
+    return counts
+
+
 def plant_model(scene, robot, mj):
     """Truth used for plant/rendering only; no request/candidate constructor."""
     target = next(o for o in scene['objects'] if o['id'] == scene['target_id'])
@@ -78,6 +93,7 @@ def prepare(folder, config_path):
     ids = [scene['id'] for scene in config['scenes']]
     if not ids or len(set(ids))!=len(ids) or any(not re.fullmatch(r'[a-z][a-z0-9_]*', name) for name in ids):
         raise ValueError('scene IDs must be unique lowercase names, not paths')
+    clutter_counts = configured_clutter_counts(config)
     source_hashes = {name: digest(ROOT/name) for name in SOURCES}
     settings = dict(SETTINGS, **config.get('settings', {}))
     if set(settings) != set(SETTINGS) or any(not np.isfinite(v) or v <= 0 for v in settings.values()):
@@ -122,6 +138,7 @@ def prepare(folder, config_path):
     if any(digest(ROOT/name) != expected for name, expected in source_hashes.items()):
         raise ValueError('source changed during preparation; retain this draft and prepare a new run')
     save(folder/'manifest.json', dict(scene_ids=[s['id'] for s in config['scenes']], methods=METHODS,
+        clutter_counts=clutter_counts,
         schedule='Once at startup; one actual response shared by the three Jev conditions. Repeated scheduler is a separate diagnostic, not a crossed comparison matrix.',
         frozen_files={name: digest(folder/name) for name in frozen},
         source_sha256=source_hashes,

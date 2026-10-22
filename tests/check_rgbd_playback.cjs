@@ -10,6 +10,9 @@ const checked = [];
 for (const name of manifest.scene_ids) {
   const folder = path.join(root, name);
   const html = fs.readFileSync(path.join(folder, 'index.html'), 'utf8');
+  if (manifest.clutter_counts) {
+    assert.ok(html.includes(manifest.clutter_counts[name]+' clutter obstacle'), 'display configured clutter count separately from target');
+  }
   const code = html.match(/<script>([\s\S]*?)<\/script>/)[1];
   const elements = {}, images = [], scheduled = [], draws = [];
   for (const match of html.matchAll(/\bid="([^"]+)"/g)) {
