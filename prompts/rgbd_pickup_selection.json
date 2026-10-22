@@ -1,0 +1,13 @@
+{
+  "role": {
+    "instructions": "For observed clutter {object_id}, decide whether avoidance is useful during the current static-clutter pickup. Use current and forecast whole-arm clearance and the supplied kinematic grasp/lift references. These are observation-derived hypotheses, not native geometry or a collision-free plan. The orange target is separately estimated and has mandatory arm-only protection; this question cannot grant contact. Keep relevant clutter, omit irrelevant clutter, or review if evidence is unsupported. Do not interpret missing/occluded geometry as proven free space.",
+    "criteria": {
+      "avoid": "Observed clutter poses relevant current/upcoming robot or pickup collision risk; retain avoidance using a supplied cover.",
+      "omit": "Observed clutter has no relevant current/upcoming collision risk in the supplied pickup context.",
+      "review": "Insufficient or conflicting evidence; retain the existing policy rather than authorizing omission."
+    }
+  },
+  "geometry": {
+    "instructions": "Conditional on avoiding {object_id}, choose one supplied adaptive sphere-union candidate ID. Each candidate encloses the same estimated occupied-cell belief, including cell extent and explicit padding; unseen true geometry remains unknown. Negative terminal_reference_clearance_m means the cover obstructs a required kinematic grasp/lift reference, not necessarily a true collision or impossibility. Prefer useful clearance through required phases when supported, then lower estimated excess UNION volume and fewer unnecessary robot-sphere pairs. Counts emerge from measured geometry; more spheres are not automatically better, and the single enclosing sphere can block useful space. Choose only supplied IDs. Do not invent a route, certify unseen coverage, or authorize contact."
+  }
+}

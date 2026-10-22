@@ -1,5 +1,79 @@
 # Jev-selected CBFs
 
+The RGBD revision is implemented in `run_rgbd_pickup.py`, with current
+qualification/results recorded at the top of [PROGRESS.md](PROGRESS.md). Historical
+oracle-input experiments below remain available and are labeled separately.
+Source, tests and fixtures are included in the repository; generated galleries,
+trajectories and provider records are ignored local evidence and are not included
+in a fresh clone.
+
+Open the completed local gallery at
+[`artifacts/rgbd/gallery_v2/index.html`](artifacts/rgbd/gallery_v2/index.html).
+All 15 runs are complete: adaptive Jev geometry gives 3/3 safe pickups, both
+single-sphere conditions stall, and off mode collides in all three scenes.
+Deterministic adaptive qualification witnesses also succeed; no unique Jev
+superiority is established. 125 regression tests and 19 independent trajectory
+audits pass. Timing overruns and the simple color/shape-completion assumptions
+remain visible in the report. No hardware or hard real-time guarantee is claimed.
+
+The repeated comparison is also complete at
+[`artifacts/rgbd/repeated_v1/index.html`](artifacts/rgbd/repeated_v1/index.html):
+nine new rollouts covering all three Jev conditions on all three scenes, paired
+to the exact prior inputs and startup answers. Repeated updates preserve the
+same pickup outcomes, with 19 accepted policy changes and higher mean enabled
+pair counts on medium/hard. All new trajectories pass independent native audit;
+129 preflight tests pass. The 115 new requests cost an estimated $0.092273. One
+invalid late answer is retained and never applied; no re-query occurred. The
+non-Jev baseline runs are reused, not additional experimental trials.
+
+The revision uses color components estimated from RGB and calibrated metric depth
+for the target and clutter. A supported convex-footprint extrusion is an explicit
+unseen-shape hypothesis, not full-object coverage. Adaptive sphere counts emerge
+from bounded greedy union-volume refinement; every whole estimated cell is checked
+before a cover can be accepted. Static clutter fits are cached. A native-rendering
+worker owns its own data/GL context; control reads completed target estimates and
+joint/gripper state. Independent native contacts/lift are scored after control.
+
+Use the existing environment; no additional detector, service or SDK is installed:
+
+```bash
+uv run --offline --frozen --cache-dir .uv-cache python -B run_rgbd_pickup.py prepare --output artifacts/rgbd/MY_RUN
+uv run --offline --frozen --cache-dir .uv-cache python -B run_rgbd_pickup.py qualify --output artifacts/rgbd/MY_RUN
+# Authorized live work only: reserves against the original cumulative $7.50 ledger.
+uv run --offline --frozen --extra jev --cache-dir .uv-cache --env-file .env.local python -B run_rgbd_pickup.py run --output artifacts/rgbd/MY_RUN --live
+uv run --offline --frozen --cache-dir .uv-cache python -B run_rgbd_pickup.py gallery --output artifacts/rgbd/MY_RUN
+uv run --offline --frozen --cache-dir .uv-cache python -B verify_rgbd_pickup.py --output artifacts/rgbd/MY_RUN
+```
+
+The five conditions are scene CBFs off, all clutter/single sphere, all clutter/Jev
+geometry, Jev objects/single sphere, and Jev objects/Jev geometry. One actual
+startup answer per scene is shared across the three Jev conditions. The target is
+excluded from clutter selection and has the same mandatory observed guard in every
+non-off condition. Off retains the original intrinsic robot protections. Only
+finger-target contact and ordinary support contact are intended. A startup refusal
+has no fabricated trajectory or collision-free success; stalled pickups also fail.
+
+The 1 ms simulation step targets 1,000 Hz simulated time. Wall-clock loop/control,
+camera processing and fitting measurements are separate and do not certify real
+time. `repeat --case easy --live` is a separate diagnostic command using the same
+ledger, one request in flight, and at least 500 ms between wall-clock request starts;
+it is not another crossed gallery matrix. All generated evidence remains local and
+ignored. Outputs must stay inside this repository, and completed attempts are never
+overwritten. Changes to frozen sources require a new run directory.
+
+The authorized repeated-schedule comparison uses exact saved inputs and startup
+answers, with a fresh measured-state request stream for each of the three Jev
+conditions on all three scenes. The two non-Jev conditions are reused baselines.
+Prepare before running; completed attempts are never replaced or re-queried:
+
+```bash
+uv run --offline --frozen --cache-dir .uv-cache python -B rgbd_repeated.py prepare --output artifacts/rgbd/repeated_v1 --reference artifacts/rgbd/gallery_v2
+uv run --offline --frozen --extra jev --cache-dir .uv-cache --env-file .env.local python -B rgbd_repeated.py run --output artifacts/rgbd/repeated_v1 --live
+uv run --offline --frozen --cache-dir .uv-cache python -B rgbd_repeated.py gallery --output artifacts/rgbd/repeated_v1
+uv run --offline --frozen --cache-dir .uv-cache python -B verify_rgbd_pickup.py --output artifacts/rgbd/repeated_v1
+node tests/check_rgbd_playback.cjs artifacts/rgbd/repeated_v1
+```
+
 This repository adds task-conditioned Jev constraint selection around the original
 FRAX/CBFpy controller, without editing the three upstream repositories. Reusable
 infrastructure now prepares actual-Panda scene/motion context, generates sphere

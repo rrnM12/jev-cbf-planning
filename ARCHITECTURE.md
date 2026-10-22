@@ -1,6 +1,45 @@
 # Jev-selected CBFs: evolving architecture and working plan
 
 Status: a living research plan, not a frozen implementation specification.
+
+D27 repeated comparison is complete locally: `rgbd_repeated.py` derives a new,
+hash-bound run from the completed startup-only gallery, preserving its exact
+geometry, scenes and initial answers. The three Jev ablations each run repeated
+updates on easy/medium/hard; non-Jev baselines are reused, not new trials. Each
+rollout owns its measured-state requests. The worker, controller, contact policy
+and provider cap are unchanged. Review `artifacts/rgbd/repeated_v1/index.html`:
+both adaptive conditions remain 3/3 safe, single-sphere selection remains 0/3,
+and 19 accepted policy changes increase mean enabled pairs on medium/hard.
+These include temporary addition/removal of the hard-scene bar as well as
+geometry switches; no pickup outcome improves.
+One invalid late response is retained without application or re-query. There is
+no demonstrated completion or runtime benefit from repetition here. See current
+PROGRESS.md for audits, usage and the limitations of this one-run-per-condition
+comparison; original producer snapshots and the startup gallery remain intact.
+
+D26 completed revision: `artifacts/rgbd/gallery_v2/index.html` contains the revised
+three-scene/five-method gallery. The planning-only language below describes its starting
+checkpoint. New `rgbd_scene.py` owns raw calibrated RGBD, classical color-component
+inventory/identity estimation, explicit supported-envelope beliefs, and target
+tracking. `adaptive_geometry.py` fits bounded whole-cell enclosing sphere unions.
+`rgbd_pickup.py` reuses `PickupRuntime.setup`, FRAX nominal torque control and
+CBFpy, while replacing oracle task/geometry hooks. Plant construction/rendering
+and post-run native evaluation are separate from observed controller inputs.
+`run_rgbd_pickup.py` freezes inputs, qualifies scenes offline and coordinates the
+five once-at-start ablations with a shared actual Jev response. A separate repeated
+diagnostic uses the completion-driven 2 Hz wall-clock ceiling. These provisional
+choices and current evidence are tracked in PROGRESS.md; no hardware claim.
+All 15 primary runs plus four auxiliary trajectories pass independent native
+re-evaluation; 125 regression tests pass. Geometry enables the pickups, and role
+selection reduces enabled rows; the non-model adaptive witnesses also succeed.
+Mean wall throughput exceeds 1 kHz, while individual-step overruns remain.
+Target pose/guard admission and task completion use camera/joint estimates;
+native contact/lift truth is post-run scoring only. The five-method gallery uses
+one shared startup response per scene; seven additional repeated requests belong
+to one separately labeled diagnostic, not a crossed study. Fixed allocated rows
+and estimated-envelope/unknown-region assumptions remain explicit.
+
+The following status paragraphs preserve earlier implementation checkpoints.
 Updated 21 October 2026. The four-item pickup gallery and original follow-on
 software study are implemented. The further approved extension is complete locally:
 richer sphere families, selection diagnosis, harder unseen layouts, simulated

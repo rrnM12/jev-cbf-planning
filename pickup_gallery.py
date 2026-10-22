@@ -43,11 +43,18 @@ def mode_payload(trace, result, indices, target_id, objects):
     }
 
 
-def render_frames(mj, model, trace, indices, objects, target_id, *, width=480, height=360):
+def render_frames(mj, model, trace, indices, objects, target_id, *, width=480, height=360, camera_options=None, object_labels=None):
     data = mj.MjData(model)
     option = mj.MjvOption(); option.geomgroup[3] = 0; option.geomgroup[4] = 0
     camera = mj.MjvCamera(); camera.lookat[:] = [.35, 0., .25]
     camera.distance, camera.azimuth, camera.elevation = 1.35, 135, -35
+    for key, value in (camera_options or {}).items():
+        if key == 'lookat':
+            camera.lookat[:] = value
+        elif key in ('distance', 'azimuth', 'elevation'):
+            setattr(camera, key, value)
+        else:
+            raise ValueError('unknown playback camera option: '+key)
     model.geom("target_geom").rgba[3] = 0
     with mj.Renderer(model, width=width, height=height) as renderer:
         for index in indices:
@@ -63,7 +70,8 @@ def render_frames(mj, model, trace, indices, objects, target_id, *, width=480, h
             labels = []
             for obj in objects:
                 geom = model.geom(f"scene/{obj['id']}").id
-                labels.append(("TARGET" if obj["id"] == target_id else obj["id"], data.geom_xpos[geom]+[0, 0, obj["size_m"][2]/2+.025]))
+                label = (object_labels or {}).get(obj['id'], "TARGET" if obj["id"] == target_id else obj["id"])
+                labels.append((label, data.geom_xpos[geom]+[0, 0, obj["size_m"][2]/2+.025]))
             add_scene_labels(scene, labels, append=True)
             for point in trace["ee_m"][np.linspace(0, index, min(index+1, 70), dtype=int)]:
                 mj.mjv_initGeom(scene.geoms[scene.ngeom], mj.mjtGeom.mjGEOM_SPHERE,

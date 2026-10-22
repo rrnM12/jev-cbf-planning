@@ -1,8 +1,222 @@
 # Progress and decisions
 
-Updated: 21 October 2026.
+Updated: 22 October 2026.
 
 ## Current checkpoint
+
+### RGBD and repeated-Jev source publication (D28)
+
+On 22 October, Nihar requested pushing the completed work to the existing
+repository. This publication includes the D26 RGBD/adaptive-cover implementation,
+the D27 repeated-schedule comparison workflow, tests, scene/prompt fixtures,
+shared-renderer options and documentation. Historical local-only publication
+statements below describe the checkpoints before this request.
+
+Generated galleries, trajectories, raw model answers, source snapshots, the
+cumulative usage ledger, credentials, environments and caches remain ignored and
+local. A fresh clone receives the source and documented outcomes, not the saved
+experiment evidence. No new provider call, research rollout, hardware work,
+dependency change or upstream modification is included in publication.
+
+Publication checks on 22 October: 129 offline regression tests passed (59.020 s),
+and the offline playback harness passed for both three-scene galleries. Staged
+credential/exclusion and whitespace checks pass; all three upstream worktrees are
+clean. The cumulative ledger remains unchanged at 499 requests and $4.120510464
+reservations. Local verification logs and commit/remote identity records are kept
+under `artifacts/publication/rgbd_20261022` (ignored).
+
+### Repeated-Jev comparison complete locally (D27)
+
+Open `artifacts/rgbd/repeated_v1/index.html`. Nihar requested repeated Jev tests
+as well; all three Jev ablations now have a new rollout on easy/medium/hard,
+paired to the completed startup-only gallery. `rgbd_repeated.py` reuses exact
+frozen scenes, settings, RGBD beliefs, initial requests/answers, qualifications and
+non-Jev baseline trajectories. Each new rollout queries its own measured state
+through the existing completion-driven worker. Original evidence is unchanged.
+
+| Jev condition | Startup-only safe pickups | Repeated safe pickups | Repeated unwanted collisions | New requests |
+| --- | --- | --- | --- | --- |
+| All clutter / Jev geometry | 3/3 | 3/3 | 0/3 | 24 |
+| Jev objects / single sphere | 0/3 | 0/3 | 0/3 | 68 |
+| Jev objects / Jev geometry | 3/3 | 3/3 | 0/3 | 23 |
+
+The single-sphere condition still stalls for the full 20 simulated seconds in
+all three scenes. Repeated querying made 19 accepted policy changes after
+startup: the post switches between five and nine spheres, the hard-scene bar
+between five and eight, and the full hard method temporarily adds then omits
+that bar. None of these changes improved completion. Mean enabled clutter pairs
+(easy/medium/hard): all-clutter
+geometry 377/440.45/617.83 versus startup 377/377/609; selected-object adaptive
+145/184.91/240.74 versus startup 145/145/145. Single-sphere selection remains
+29/29/29. No QP allocation reduction or runtime benefit is established.
+One rollout per schedule/condition on known designed scenes is not
+a generalization, repeatability or causal timing study.
+
+All 115 provider requests are retained: 114 decoded successfully. The final
+hard/all_jev response (`queries/009/selection.json`) failed maximal-probability
+choice validation for `geometry/observed_01`; it arrived after the rollout and
+was never installed. No re-query or replacement occurred. Seven responses in
+total were late and not applied. Every installed selection passed admission;
+no camera target-guard update was rejected and no sampled modeled h2 was negative.
+Actual start gaps are at least 526 ms, achieved request rates 1.827–1.881 Hz,
+with no overlap or old-snapshot queue. Request latencies span 177–493 ms.
+Warm control-step overruns remain 4.5–10.9%; no hard real-time claim.
+
+Verification: all 129 regression tests passed before live work (60.774 s);
+four workflow tests passed again after adding invalid-late-response reporting.
+Independent native audit passes for nine new trajectories, six reused baselines
+and three inherited qualification witnesses (18 total). All generated playback
+scripts/controls/atlas bounds pass the offline Node harness, and final native
+frames were inspected. No live-browser QA or hardware validation is claimed.
+Frozen inputs, startup reference and archived producer snapshots remain bound;
+completed-run resume makes no new request or rollout. Current report/table code
+adds invalid-response fields after the runs; this changes neither controller nor
+physics, and the original producer sources are preserved. See
+`schedule_comparison.json`, `research_summary.json`, `verification.json`,
+`playback_checks.json`, `handoff_checks.json` and the test logs in the gallery.
+
+Existing credentials were obtained without printing them. The original ledger
+began with 384 calls, $0.374005212 estimated usage and $3.170893824 conservative
+reservations. Direct official pricing was checked again at
+https://docs.typesafe.ai/models ($0.042/M input, output free), with model pinned
+to `jev-1.13.0`. This comparison adds 115 logical requests, $0.092272992 estimated
+usage and $0.949616640 reservations. Cumulative totals: 499 requests,
+$0.466278204 estimated usage, $4.120510464 reservations against the same $7.50.
+There was no scene/controller/contact/prompt/model retuning, new paid service,
+hardware, commit or push. This requested comparison is complete; retain all
+failures and wait for new direction before further experiments or calls.
+
+### RGBD revision completed locally: three-scene/five-method gallery (D26)
+
+Open `artifacts/rgbd/gallery_v2/index.html`. The completed gallery has 15 physical
+rollouts, synchronized 6 fps playback/scrubbing, visible calibrated covers and
+RGB/depth/estimated masks, geometry-coverage inspection, independent primary
+metrics and separate provider/fitting/control/runtime costs. Generated evidence
+remains ignored/local; a fresh clone needs deliberately new runs or these saved
+artifacts. No commit or push was performed.
+
+| Agreed condition | Unwanted collisions | Physical pickups | Safe pickups | Enabled clutter CBF pairs, easy/medium/hard |
+| --- | --- | --- | --- | --- |
+| Current off | 3/3 | 3/3 | 0/3 | 0 / 0 / 0 |
+| All clutter / single sphere | 0/3 | 0/3 | 0/3 | 58 / 58 / 87 |
+| All clutter / Jev geometry | 0/3 | 3/3 | 3/3 | 377 / 377 / 609 |
+| Jev objects / single sphere | 0/3 | 0/3 | 0/3 | 29 / 29 / 29 |
+| Jev objects / Jev geometry | 0/3 | 3/3 | 3/3 | 145 / 145 / 145 |
+
+The two single-sphere conditions stall; they are not counted as successful
+avoidance. Every Jev proposal was accepted without retuning or re-querying for
+preferred answers. Jev selected five spheres for the relevant post and omitted
+distant clutter. Target guards add 16 enabled pairs in every non-off condition;
+51 intrinsic barriers remain in all modes. Allocated scene rows stay 783/783/1044,
+and CBFpy's full barrier-plus-actuator inequality rows stay 848/848/1109. Masking
+fewer pairs is not a reduced QP allocation or a demonstrated runtime speedup.
+The deterministic all-adaptive qualification witnesses also finish 3/3 safely;
+these designed scenes do not establish unique Jev superiority or unseen evidence.
+
+Verification: 125 regression tests pass, plus the final shared-renderer tests.
+`verify_rgbd_pickup.py` independently re-evaluated all 15 primary trajectories,
+three qualification witnesses and one repeated diagnostic: native contacts,
+target bottom/bilateral-contact confirmation, enabled pair counts, 1 ms steps and
+trajectory fingerprints agree. All local gallery links resolve. An offline Node
+DOM/canvas harness tests all three actual generated scripts, every timeline tick,
+all five panels, atlas bounds, pause/play/restart/scrub/speed. Native rendered
+frames were visually inspected. Computer/browser automation timed out, so no
+live-browser QA is claimed; no additional computer permissions are needed.
+Configured-key exclusion, read-only upstream cleanliness and completed-run resume
+without another request/rollout all pass. See `verification.json`,
+`playback_checks.json`, `handoff_checks.json` and `test_output.txt` in the gallery.
+
+The 1 ms simulation step is implemented. Measured warm-loop means span about
+1,166–2,094 Hz wall time, but 2.7–12.4% of measured steps exceed 1 ms. This is
+not hard real-time control. Initial sphere fitting totals 55–77 ms per scene
+(maximum 25.5 ms/object, no 75 ms/object overruns), above the earlier proposed
+50 ms scene-pass target; completed fits are cached outside control. These caps
+are provisional engineering choices, not a hard deadline or hardware certificate.
+The separate easy repeated run is a safe pickup with seven requests, start gaps
+528–548 ms (1.87 Hz achieved), 177–492 ms request latencies, and 27.7 ms median
+worker-side preparation (340 ms first preparation). One late response is retained
+and not applied. Its event-file serialization was corrected from the already
+complete result log, and the close-path fix has a regression test. Camera target
+updates are admitted separately; no guard update was rejected in the three full
+method runs. Read `research_summary.json` for the underlying timing/coverage limits.
+
+Ten new logical Jev requests: three shared startup calls plus seven repeated
+diagnostic calls. New reported-token estimate $0.007258944, new conservative
+reservations $0.082575360. The original ledger now has 384 requests, cumulative
+estimate $0.374005212 and reservations $3.170893824 against the unchanged $7.50.
+Credentials were loaded from the existing ignored environment file without
+printing them; the ledger was verified before any call. Price was checked against
+the official direct provider. No additional paid service or installation was used.
+Raw answers, attempts, source snapshots, all failures and earlier datasets remain.
+Current post-run log/render improvements are separate from the hash-bound producer
+sources archived with the trajectories; no comparison was rerun after seeing Jev.
+
+Nihar authorized autonomous implementation through the three-scene, five-method
+gallery on 21 October, starting with an easy RGBD pickup prototype. This
+supersedes the planning-only stops below. Keep all work here, upstreams read-only,
+the existing finger-only target contact/evaluation policy, and the cumulative
+$7.50 Jev cap; no hardware, new paid service, publication or push is included.
+
+Provisional reversible choices: classical saturated-color image components with
+spatial association across calibrated scene/opposite/wrist views; the task names
+the orange target, without supplying its pose/shape. Static clutter is cached
+from the initial RGBD survey. The estimated supported-envelope volume is a
+completion hypothesis; unknown/unseen geometry is not certified free or enclosed.
+Depth determines target/grasp height, and subsequent RGBD plus gripper encoders
+drive task phases/completion; native contacts/lift are post-run evaluation only.
+Target orientation is unknown; visible-extents tracking and a common enclosing
+target ball are limited estimators, not arbitrary-pose grasping or unseen coverage.
+
+`adaptive_geometry.py` validates whole-cell bounding-ball enclosure for each
+completed cover and greedily refines using estimated union excess reduction.
+Provisional limits: 10 spheres/object, three data-derived candidate fits,
+6,000 cells/object, 90 split checks, 8,192 shared volume samples, 75 ms cooperative
+per-object fitting budget, 1,160 allocated robot/scene pairs. These are engineering
+limits, not approved research constants or hard deadlines. Record measured
+latency/overruns and refine from evidence. No cell/object may be discarded to fit
+the budget. Single-sphere baseline is the same belief's initial enclosing ball.
+
+Gallery schedule: one startup answer per scene shared across all three Jev
+conditions, isolating the five agreed ablations. The separately implemented
+completion-driven repeated worker has a 500 ms wall-clock start ceiling, one
+request in flight, no snapshot queue, and worker-side request preparation.
+It is a diagnostic path, not an expanded crossed gallery matrix.
+
+Before implementation: original 117 tests passed; upstream worktrees clean. Existing
+ignored `.env.local` exposes the Jev key without printing it. The original ledger
+began with 374 calls, $0.366746268 reported-token estimate and $3.088318464 conservative
+reservations against $7.50. Official direct pricing checked 21 October at
+https://docs.typesafe.ai/models: pinned `jev-1.13.0`, $0.042/M input tokens,
+output free. The completed-run cumulative usage is reported above.
+
+Retained development: `artifacts/rgbd/prototype_v1` exposed an orange highlight
+classification issue: a target fragment was incorrectly counted as clutter.
+The color criterion was broadened using RGB channel evidence; v1 remains intact.
+Later retained drafts `prototype_v2`–`prototype_v8` exposed depth-discontinuity
+component merging, overly loose supported boxes, initial representation overlap,
+safe stalling, descent/pregrasp cycles and early or overly conservative target
+completion estimates. RGB masks now include yellow specular highlights and split
+at metric depth edges. Beliefs use observed convex XY footprints extruded to the
+explicit support plane. Target lift uses visible lower extent, initial visibility
+offset and padding; neither hidden native pose nor native contact IDs are read by
+task logic. A common observed single-sphere arm-target guard is rotation invariant;
+its center estimate and unseen completion remain uncertain.
+
+`prototype_v9` has three offline-qualified scenes: actual off collisions, valid
+physical starts, and actual no-contact adaptive witness pickups in all three.
+The single-sphere representations have negative initial modeled clearance in this
+candidate set; those would be startup failures, never evidence of useful avoidance.
+`prototype_v10` tested lower obstructions/farther targets before final scene freeze;
+its three off runs were collision-free and were not qualified as challenge scenes.
+`prototype_v11` found all three final scenes with valid single-sphere starts,
+actual off collisions and safe adaptive witnesses. `gallery_v1` was an offline
+producer draft; `gallery_v2` also tightened the union integration-domain bound so
+all possible child balls are included. No new Jev call was made during design.
+The read-only OSCBF source controller is now used for first-step nominal-torque
+parity checking; actual nominal control remains the original FRAX implementation,
+and CBFpy still filters it. Do not present development drafts as a completed gallery
+or full-object coverage validation. Next action is user review of the completed
+gallery; no further automatic dataset, paid call, hardware work or publication.
 
 ### Revision plan published for engineer handoff (D25)
 

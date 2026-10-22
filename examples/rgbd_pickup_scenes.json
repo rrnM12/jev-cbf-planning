@@ -1,0 +1,172 @@
+{
+  "scenes": [
+    {
+      "id": "easy",
+      "target_id": "target_object",
+      "objects": [
+        {
+          "id": "target_object",
+          "shape": "cylinder",
+          "size_m": [
+            0.044,
+            0.044,
+            0.12
+          ],
+          "center_m": [
+            0.56,
+            0.22,
+            0.06
+          ],
+          "mass_kg": 0.05
+        },
+        {
+          "id": "bottle_a",
+          "shape": "cylinder",
+          "size_m": [
+            0.05,
+            0.05,
+            0.36
+          ],
+          "center_m": [
+            0.46,
+            0.0,
+            0.18
+          ],
+          "description": "Stationary tabletop clutter."
+        },
+        {
+          "id": "box_b",
+          "shape": "box",
+          "size_m": [
+            0.08,
+            0.08,
+            0.08
+          ],
+          "center_m": [
+            0.66,
+            -0.28,
+            0.04
+          ],
+          "description": "Stationary tabletop clutter."
+        }
+      ]
+    },
+    {
+      "id": "medium",
+      "target_id": "target_object",
+      "objects": [
+        {
+          "id": "target_object",
+          "shape": "cylinder",
+          "size_m": [
+            0.044,
+            0.044,
+            0.12
+          ],
+          "center_m": [
+            0.56,
+            0.22,
+            0.06
+          ],
+          "mass_kg": 0.05
+        },
+        {
+          "id": "bottle_a",
+          "shape": "cylinder",
+          "size_m": [
+            0.05,
+            0.05,
+            0.36
+          ],
+          "center_m": [
+            0.48,
+            0.02,
+            0.18
+          ],
+          "description": "Stationary tabletop clutter."
+        },
+        {
+          "id": "box_b",
+          "shape": "box",
+          "size_m": [
+            0.08,
+            0.08,
+            0.08
+          ],
+          "center_m": [
+            0.66,
+            -0.28,
+            0.04
+          ],
+          "description": "Stationary tabletop clutter."
+        }
+      ]
+    },
+    {
+      "id": "hard",
+      "target_id": "target_object",
+      "objects": [
+        {
+          "id": "target_object",
+          "shape": "cylinder",
+          "size_m": [
+            0.044,
+            0.044,
+            0.12
+          ],
+          "center_m": [
+            0.56,
+            0.22,
+            0.06
+          ],
+          "mass_kg": 0.05
+        },
+        {
+          "id": "bottle_a",
+          "shape": "cylinder",
+          "size_m": [
+            0.05,
+            0.05,
+            0.36
+          ],
+          "center_m": [
+            0.5,
+            0.04,
+            0.18
+          ],
+          "description": "Stationary tabletop clutter."
+        },
+        {
+          "id": "box_b",
+          "shape": "box",
+          "size_m": [
+            0.08,
+            0.08,
+            0.08
+          ],
+          "center_m": [
+            0.66,
+            -0.28,
+            0.04
+          ],
+          "description": "Stationary tabletop clutter."
+        },
+        {
+          "id": "bar_c",
+          "shape": "box",
+          "size_m": [
+            0.2,
+            0.04,
+            0.08
+          ],
+          "center_m": [
+            0.64,
+            0.42,
+            0.04
+          ]
+        }
+      ]
+    }
+  ],
+  "design_note": "Designed static-clutter demonstration, fixed before new Jev answers. Same target, progressively more intrusive observed post; hard adds another elongated clutter object. Historical failed qualifications remain in artifacts/rgbd."
+}

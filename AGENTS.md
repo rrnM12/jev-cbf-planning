@@ -19,6 +19,46 @@ implementation checklist. Follow the user's latest directions if they differ.
 
 ## Work one checkpoint at a time
 
+- Publication authorization (22 October; D28): Nihar requested pushing the
+  completed D26/D27 work to the existing GitHub repository. Commit and push the
+  RGBD/adaptive-cover and repeated-Jev source, tests, scene/prompt fixtures,
+  renderer changes and documentation after verifying offline tests, the staged
+  credential exclusion, upstream cleanliness and the remote identity. Keep
+  generated evidence, the cumulative usage ledger, credentials, environments
+  and caches excluded. No new experiment, API call, hardware work or dependency
+  change is part of this publication request. Earlier no-push checkpoint stops
+  are superseded for this source publication only.
+
+- Active authorization (21 October; D27): Nihar requested repeated Jev tests as
+  well. Run all three revised Jev ablations across easy/medium/hard, paired to
+  `artifacts/rgbd/gallery_v2`, using exact prior inputs/startup answers and reused
+  non-Jev baselines. This supersedes the D26 no-new-experiment stop for these nine
+  rollouts. Keep the existing completion-driven 2 Hz ceiling, one request in
+  flight, read-only upstreams, contact assumptions and cumulative $7.50 ledger.
+  Preserve all original outcomes; no scene/prompt/controller retuning, new paid
+  service, hardware, commit or push. Verify and document results and failures.
+  D27 is now complete at `artifacts/rgbd/repeated_v1/index.html`: nine new runs,
+  unchanged safe-pickup outcomes (3/3 adaptive conditions, 0/3 single-sphere),
+  115 new requests, one invalid late answer preserved without application or
+  re-query. All nine new trajectories pass independent native audit. The ledger
+  has 499 calls and $4.120510464 reservations against $7.50. No further automatic
+  experiment/call is authorized by this completed comparison; see PROGRESS.md.
+
+- Active authorization (21 October; D26): implement the RGBD/adaptive-cover
+  revision autonomously through the easy/medium/hard five-method gallery.
+  This supersedes historical planning-only/completed-checkpoint stops below.
+  Make documented reversible choices; retain failures, verify with tests, obtain
+  existing credentials and cumulative ledger securely before live calls. Preserve
+  scope, contact policy, upstream reuse and the existing $7.50 cumulative cap.
+  Ask only for genuine blockers or consequential changes to those boundaries.
+  No hardware, new paid services, commit or push is included.
+  This revision is now complete locally: `artifacts/rgbd/gallery_v2/index.html`,
+  15 primary runs, 19 independent audits and 125 passing tests. Ten new logical
+  Jev calls cost an estimated $0.007258944; the cumulative original ledger remains
+  authoritative. Preserve the archived producer sources and retained failures.
+  Nihar reaffirmed autonomous completion without routine permission prompts.
+  See current PROGRESS.md before any further experiment or provider call.
+
 - Publication authorization (21 October; D25): Nihar requested publishing the
   latest revision plan and engineer handoff to the existing GitHub repository.
   Commit/push AGENTS.md, ARCHITECTURE.md and PROGRESS.md only after checking the
