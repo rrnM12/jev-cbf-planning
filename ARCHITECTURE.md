@@ -9,6 +9,29 @@ failures. Start at `artifacts/pickup/review/index.html`; PROGRESS.md has live st
 The original FRAX nominal torque equations/gains remain in use, CBFpy performs
 filtering, and all three upstream repositories remain read-only.
 
+Pending revision (D22, planning only): see PROGRESS.md's current revision plan for
+the five agreed comparisons, 1 ms simulation/control target and independent
+completion-driven Jev requests capped at 2 Hz wall-clock dispatch. The next
+decision/control pipeline is to use only hardware-available measurements/models/
+calibration plus RGBD-estimated scene and target information, replacing oracle
+object inventories, masks, poses, dimensions and grasp inputs. Simulator-only
+truth remains isolated for plant/rendering and independent evaluation, not fed
+back into control. Reuse the shared camera/RealSense-compatible frame boundary;
+this is not a verified RealSense sensor emulator. Perception and grasp methods
+are still to be selected; existing oracle experiments remain historical evidence.
+These revisions are not implemented and do not authorize runs or publication.
+Geometry direction (D23) also supersedes fixed sphere-count menus for the new
+method: use adaptive RGBD-derived covers under count/compute limits. PROGRESS.md
+records primary research and a proposed bounded enclosing-sphere refinement;
+algorithm choice, numeric limits and latency remain unapproved/unmeasured.
+Retain single-sphere baselines and old results; do not claim visible-point fits
+enclose unseen geometry or silently remove Jev's geometry-selection role.
+D24 sets the first revised demo checkpoint: easy/medium/hard static pickup scenes
+with actual current-off collisions, comparing the five conditions on unwanted
+collision, pickup success, CBF count and run cost. PROGRESS.md records the current
+handoff; D25 authorizes documentation publication only, not implementation or new
+experimental results. Read its current revision plan before older proposals below.
+
 New camera boundary (D20, software only): `camera_io.py` supplies typed metric
 frames, optical intrinsics/projection, explicit capture-time calibration and
 hash-checked recording/replay. `realsense_camera.py` is an optional lazy SDK

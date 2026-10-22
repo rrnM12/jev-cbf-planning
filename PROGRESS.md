@@ -4,6 +4,248 @@ Updated: 21 October 2026.
 
 ## Current checkpoint
 
+### Revision-plan publication requested (D25)
+
+On 21 October, Nihar requested pushing the latest plan so another engineer can
+work from the current repository. This is a documentation-only publication of
+AGENTS.md, ARCHITECTURE.md and PROGRESS.md on top of published `50c47fa`.
+The five comparisons, 1 kHz target, revised Jev scheduling, perception changes,
+adaptive sphere fitting and new three-scene checkpoint remain unimplemented.
+No source refactoring, new experiment, API call or hardware work is included.
+
+### Revision plan agreed in discussion (D22-D24; not implemented)
+
+Nihar is planning the next revision, not authorizing code changes or new runs yet.
+The following directions supersede older proposed experiment/input choices for
+the next revision only; retain existing datasets, results, methods and failures.
+All implementation still belongs here, with FRAX/OSCBF/CBFpy read-only. The plan
+does not authorize new provider calls, hardware access or SDK installation; D25
+separately authorizes publication of these planning documents only.
+
+#### Comparisons
+
+| Condition | Clutter objects constrained | Representation |
+| --- | --- | --- |
+| Current off mode | None | No scene-object CBFs, retaining the current off mode's intrinsic robot protections. |
+| All clutter / single sphere | Every observed non-target object | One enclosing sphere per object. |
+| All clutter / Jev geometry | Every observed non-target object | Jev-selected multi-sphere candidate per object. |
+| Jev objects / single sphere | Jev-selected observed clutter | One enclosing sphere per selected object. |
+| Jev objects / Jev geometry | Jev-selected observed clutter | Jev-selected multi-sphere candidate per selected object. |
+
+The single-sphere/Jev-object condition was the additional ablation Nihar approved.
+The proposed additional geometric-rule baseline was not added to this revised
+comparison set; preserve its existing code/results. Call a representation
+"Jev-selected," not proven "optimal." The target is excluded from clutter
+selection; this wording does not itself change the existing intended-finger vs
+arm-target contact/safeguard policy. Reconcile any contact-policy ambiguity with
+Nihar before implementation rather than assuming a blanket target exemption.
+
+#### Independent execution rates
+
+- Target a 1 ms simulation/control step (1,000 Hz simulated time), replacing the
+  current 2 ms/500 Hz pickup setting, and separately verify whether execution can
+  keep pace with wall time; a timestep alone is not real-time certification.
+- For repeated Jev, use one inference request in flight, continuously requesting
+  a fresh snapshot after completion subject to at least 500 ms between request
+  starts (2 Hz wall-clock ceiling), not a fixed wait after each response.
+- The next permitted start is the later of the previous completion and the
+  previous start plus 500 ms: 400 ms inference leaves 100 ms to wait, while
+  700 ms inference allows the next request immediately after completion.
+- Do not queue old snapshots or make the fast controller wait for inference;
+  continue enforcing the latest accepted constraints and report actual achieved
+  rates/latencies. Local request preparation and acceptance still need profiling
+  and appropriate separation from the fast control path.
+
+Existing once-at-start and repeated modes remain implemented. How to cross those
+query schedules with the five revised conditions is still a planning choice,
+not permission to silently add or run a larger comparison matrix.
+
+#### Hardware-available inputs, estimated scene geometry
+
+Nihar requested removing simulator-only ground truth from the decision/control
+pipeline and using simulated RGBD through the shared RealSense-compatible
+frame/perception interface instead. This is a software observation-path revision,
+not a claim that MuJoCo emulates the physical RealSense sensor or that a device
+has been validated. The plan is:
+
+- Retain inputs that a deployed setup can measure, calibrate or legitimately
+  supply: joint positions/velocities, the robot/gripper model and kinematics,
+  camera intrinsics and calibrated camera-to-robot transforms, and the textual
+  task/desired target description. Exact simulated sensor/calibration values,
+  when used as stand-ins, must be labeled idealized rather than noise-free
+  hardware truth; any support height must be explicitly measured/calibrated or
+  estimated, not silently recovered from hidden scene geometry.
+- Estimate object inventory, persistent identities/masks, positions, orientations
+  and geometry from camera observations, rather than supplying the simulator's
+  complete object list, instance segmentation, native poses, dimensions or shape
+  labels. "All objects" in a perception-based baseline means all perceived
+  non-target objects, not an oracle inventory injected only into that method.
+- Include the pickup target: its localization, geometry and grasp-related pose
+  inputs must come from hardware-available observations/estimators, not simulator
+  free-body state or hidden target dimensions. A task naming the target does not
+  provide its measured pose or a valid grasp automatically.
+- Generate sphere candidates and Jev's clearance/cost features from those same
+  estimates; do not leak native scene metadata into candidate generation,
+  contact exemptions, policy waypoints or nominal-motion features.
+- Keep simulator truth for plant construction, RGBD rendering and independent
+  offline evaluation only, including actual geometry/coverage, contacts and lift
+  scoring; evaluation must not feed corrections or hidden geometry back to Jev,
+  the controller, estimator, task completion logic or grasp planner.
+- Replace the current oracle-mask and known-target scaffolding explicitly;
+  RealSense capture provides RGBD, not object identities or grasp estimates.
+  Pick the detector/segmenter/tracker and target/grasp approach during planning,
+  rather than silently keeping oracle labels or arbitrarily choosing a model.
+- Treat occlusion, missed objects and unseen geometry as incomplete observations,
+  not proof of an empty scene or of full-object coverage by a visible-point fit.
+
+#### Adaptive sphere generation (D23; research, not implementation)
+
+Nihar explicitly requested dropping the prescribed 1/2/4 sphere approach for the
+new method, using RGBD-derived geometry to adaptively fit a tight sphere union
+instead, with count/compute caps so a complex object could use eight or nine
+spheres without an unbounded hundred-sphere proposal. Do not substitute another
+fixed count menu, including the existing richer 1/2/3/4/5/6/8 menu. Single-sphere
+baselines stay as agreed, and earlier algorithms/results remain historical.
+
+Primary research inspected:
+
+- [Adaptive Medial-Axis Approximation for Sphere-Tree Construction](https://www.tara.tcd.ie/tara8/server/api/core/bitstreams/41e5fba7-6607-45f9-9d35-4e38d963fe95/content)
+  develops enclosing sphere hierarchies with regional coverage preserved through
+  refinement; this is relevant structure, not proof of partial-view completion.
+- [Variational Sphere Set Approximation for Solid Objects](https://www.microsoft.com/en-us/research/wp-content/uploads/2017/01/sphapprox.pdf)
+  optimizes outside volume for mesh approximations; it distinguishes this from
+  minimizing total sphere volumes and does not guarantee a global optimum.
+- [CGAL's minimum enclosing sphere-of-spheres routine](https://doc.cgal.org/latest/Bounding_volumes/classCGAL_1_1Min__sphere__of__spheres__d.html)
+  supplies the single-cluster enclosing-ball subproblem, including input balls
+  rather than just points; numerical results still need containment validation.
+- [Foam](https://arxiv.org/html/2503.13704v1) and
+  [MorphIt](https://arxiv.org/html/2507.14061v1) are useful existing mesh-based
+  alternatives, not verified low-latency RGBD object fitters for this project.
+  Their existence does not establish latency or complete-shape observability.
+
+Proposed starting method, NOT yet an approved algorithm/dependency choice:
+
+1. Use object masks and calibrated depth to build an object point cloud and a
+   bounded-resolution occupied-volume belief, fusing available views; no simulator
+   mesh, dimensions or shape labels enter fitting. Hidden/unknown regions require
+   explicit treatment, not automatic free-space or guaranteed solid completion.
+2. Fit an enclosing sphere for the current estimated volume, then greedily split
+   the region whose replacement gives the most estimated outside-volume reduction
+   per added sphere/robot constraint pairs. Try a bounded set of data-derived
+   split directions, such as principal axes, rather than searching arbitrary
+   orientations or using a fixed equal-section chain.
+3. For each assigned voxel with center q, side a and chosen uncertainty margin
+   delta, enforce radius >= ||q-c|| + sqrt(3)*a/2 + delta. A sphere enclosing each
+   voxel's bounding ball covers that whole cell; fitting only voxel centers or
+   sparse surface points would not establish this. Validate before replacing a
+   parent cover, with complete estimated-volume coverage a hard condition.
+4. Use estimated excess union volume plus a sphere/constraint-count penalty to
+   score refinements, stopping for diminishing gain or a work/count/time cap;
+   avoid double-counting interior sphere overlap as wasted obstacle space. This
+   is a bounded heuristic, not a claim of global geometric optimality.
+5. Keep a small non-dominated set of fully checked fits for Jev to choose among
+   using task/risk/cost, with counts emerging from geometry rather than preset
+   values. Do not silently remove Jev's geometry-selection role. The count of
+   candidate fits must also be bounded, not just each fit's sphere count.
+6. Perform fitting outside the fast controller, cache static-object fits, and
+   publish completed geometry only. At a budget limit, keep a completed cover
+   for the current belief or report failure; do not drop cells/objects or shrink
+   radii to satisfy the budget. A previous fit is not certified for new geometry.
+
+Provisional limits proposed for discussion: at most 12 spheres per object,
+at most three non-dominated candidate fits and about 50 ms per scene geometry-
+fitting pass. These are NOT user-approved constants or measured performance.
+A scene-wide allocated robot–sphere-pair cap must also be chosen using 1 kHz
+control-loop profiling; per-object count alone does not bound total QP cost.
+Bound cloud/voxel size and split/refinement work as well as elapsed time, and
+report overruns rather than claiming cooperative deadlines are hard real time.
+Stop adding detail, not covering geometry, when caps bind. Exact numbers and the
+uncertainty/unknown-region policy need review before implementation.
+
+Spheres have no orientation parameter: optimize their centers, radii, grouping
+and relative arrangement; rotating an individual sphere changes nothing. Render
+the resulting 3D geometry through calibrated camera projection for RGB overlays,
+keeping observed-point fit, estimated-solid enclosure and true-object coverage
+separate in the inspection. RealSense does not supply object segmentation or
+unseen solid geometry automatically. No fitting code, new dependency, benchmark,
+provider call or experiment was added during this research.
+
+#### Metrics and first revised demo checkpoint (D24)
+
+Nihar requested four primary per-run metrics: whether an unwanted collision
+occurred, whether the object was picked up successfully, how many CBFs were
+drawn/used, and run cost. Score collision and pickup independently, and also show
+their conjunction as a safe pickup; collision-free stalling is not task success.
+Independent simulator truth may score these outcomes, but must not supply the
+controller with hidden scene/target information. Keep intended finger-target
+contact and ordinary support contact distinct from unwanted collisions under
+the explicit task policy.
+
+For an interpretable CBF count, show constrained-object and sphere counts beside
+enabled scene robot–obstacle CBF pairs; distinguish those from intrinsic robot
+protections and allocated QP rows. Mean/peak counts can summarize updates without
+counting every redraw of the same geometry as a new constraint. A practical cost
+breakdown is provider-dollar estimates/calls plus runtime and local fitting/
+control computation, reported separately rather than blended into an arbitrary
+score; the exact presentation is an implementation choice, not a new benchmark
+taxonomy or a hardware real-time guarantee.
+
+The first revised demo checkpoint targets three static-clutter pickup scenes,
+easy/medium/hard, within the user's requested two-to-three-scene scope:
+
+- Easy: a simple, clearly observable obstruction on the nominal pickup motion.
+- Medium: tighter clearance where a coarse enclosing sphere can block useful
+  free space and adaptive covers/object selection can be informative.
+- Hard: more demanding clutter/shape/clearance that can expose limitations of the
+  full method as well as the ablations; do not assume Jev will succeed or win.
+
+Qualify scenes by genuine unwanted collisions in the current-off simulation and
+geometric task feasibility, not by Jev answers or desired method rankings. Do not
+start with penetrating/invalid initial configurations or an inherently impossible
+pickup and call subsequent refusal proof of useful obstacle avoidance. Fix the
+comparison definitions and retain the qualified scenes/outcomes before inspecting
+comparative model results; retain unsuccessful attempts and do not cherry-pick
+only Jev wins. This is a designed demonstration, not unseen/generalization evidence.
+Evaluate all five agreed conditions with the same task/controller/observation
+assumptions, and render synchronized pickup playback, visible covers and the four
+metrics. A meaningful benefit is avoiding the off-mode collision while completing
+pickup, not merely stopping safely. The once/repeated crossing is still to finalize.
+"Our full method" means Jev object selection plus adaptive geometry, not approval
+to introduce a different paid frontier-model provider.
+
+#### Where the next engineer should start
+
+Read AGENTS.md, this current revision plan, then README.md for working commands
+and ARCHITECTURE.md for existing implementation boundaries. The code to inspect
+first is `camera_io.py`, `perception.py`, `geometry.py`, `pickup.py`, `online.py`
+and `run_pickup.py`; reuse their frame/worker/controller/filter paths. Once
+implementation is authorized, start with an easy-scene end-to-end RGBD-only
+scene/target estimation and adaptive-cover pickup prototype, then extend the
+same path to the five-condition easy/medium/hard gallery. Make reversible
+technical choices provisionally and refine them from evidence rather than
+blocking all progress on a complete up-front specification; surface consequential
+contact/safety, scope or paid-service changes before adopting them. The numeric
+fitting caps and perception/grasp methods above are not approved fixed defaults.
+The camera-plumbing implementation at `50c47fa` is the starting point; publishing
+this revision plan under D25 does not mean these experiments have been built or
+run. Generated galleries/recordings remain local and ignored, so a fresh clone
+will not contain the historical review artifacts referenced below.
+
+Read-only cleanup assessment for the engineer: targeted changes may help while
+implementing the revision, especially separating truth-only evaluation from
+perception/control, consolidating mode/configuration handling and expanding dense
+logic in touched code. Avoid a wholesale rewrite or speculative framework, retain
+the tests and recorded evidence, and keep current instructions distinct from
+historical experiments. This is a recommendation, not an executed refactor or a
+new prerequisite blocking the easy-scene prototype.
+
+Still to choose together: the perception/target-grasp components, handling of
+incomplete observations and uncertainty, initial camera views/profiles, adaptive
+fitting method/budgets and candidate scoring, and the once/repeated run matrix.
+Do not predetermine these merely to turn the research plan into a rigid spec.
+This update changes documentation only; the published 500 Hz, 2 s-period and
+partly oracle-input implementation/results remain as previously recorded.
+
 ### Published: camera plumbing
 
 Nihar requested pushing the completed D20 changes on 21 October (D21). Publish
@@ -1167,6 +1409,10 @@ These decisions came from Nihar's explicit directions/approvals in this discussi
 | D16 | Up to $7.50 total new Jev API spend during this work, using the supplied key. | User explicitly authorized spending and as many calls as needed within the dollar cap. Supersedes request-count proposals and D15's pending-budget note. Track usage and do not exceed the cap. No other paid provider is authorized. |
 | D17 | Commit and push the completed Jev source checkpoint to the existing GitHub repository. | User said "push this to repo" on 21 October. Publish source, tests, editable fixtures/templates and docs; keep credentials, environments, caches and generated experiment/gallery artifacts local/ignored. No new experiment or upstream edits. |
 | D18 | Autonomously implement/study points 1–5 and richer sphere-cover options. | User approved selection diagnosis, geometric comparison, stronger unseen evaluation, simulated RGB/depth perception and imperfect-information/failure tests; asked to consider more than 1/2/4 spheres and continue without human help. Existing total Jev budget and read-only upstream/static-pickup scope remain; no new push or other paid provider. |
+| D22 | Plan five revised comparisons, a 1,000 Hz simulation/control target, an independent completion-driven Jev loop capped at 2 Hz, and hardware-available inputs with RGBD-estimated scene/target information. | User explicitly requested accumulating revisions without implementing them yet; current off retains its existing semantics, and simulator-only truth stays in plant/rendering/independent evaluation rather than policy/selection inputs. Perception/grasp choices and the final run matrix remain open. |
+| D23 | Replace prescribed sphere-count menus in the revised method with adaptive RGBD-derived sphere unions under count and compute caps. | User requested internet research and tight, low-latency representations that can use eight or nine spheres for complex objects without hundred-sphere proposals; specific algorithms, numeric caps, latency and uncertainty assumptions remain proposals, not validated or approved defaults. |
+| D24 | Use collision outcome, pickup success, CBF count and run cost as primary metrics, with a first revised demo targeting easy/medium/hard scenes where the current off mode collides. | User requested two to three demonstration scenes to show actual CBF benefit and distinguish ablations; keep scene qualification/result reporting honest and separate simulator evaluation truth from perception/control inputs. This is a planning checkpoint, not an executed study or proof that Jev wins. |
+| D25 | Commit and push the current revision-plan and engineer-handoff documentation to the existing GitHub repository. | User requested the latest repository for another engineer; publication is documentation only and does not implement revisions, refactor source, rerun experiments or authorize hardware/provider access. |
 
 Nihar owns consequential ambiguities; routine local implementation choices do not
 require an approval ceremony. Approval of D02/D03 did not approve all mentor ideas.

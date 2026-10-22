@@ -19,6 +19,34 @@ implementation checklist. Follow the user's latest directions if they differ.
 
 ## Work one checkpoint at a time
 
+- Publication authorization (21 October; D25): Nihar requested publishing the
+  latest revision plan and engineer handoff to the existing GitHub repository.
+  Commit/push AGENTS.md, ARCHITECTURE.md and PROGRESS.md only after checking the
+  diff, staged credential exclusion and remote identity. Keep generated evidence,
+  credentials and environments excluded, and upstreams read-only. This publishes
+  D22-D24 planning, not implementation or validation of the new experiment.
+  No refactoring, new run/provider call, hardware access or installation is in scope.
+- Current direction (21 October; D22): planning only for the next experiment
+  revision. Record the five agreed comparisons, unchanged current-off semantics,
+  proposed 1 ms simulation/control step, independent completion-driven Jev loop
+  capped at 2 Hz wall-clock dispatch, and hardware-available observation inputs.
+  PROGRESS.md's revision plan is authoritative over older oracle-input proposals.
+  Do not implement these revisions, rerun studies, call a provider, connect a
+  device or push until Nihar explicitly requests the next implementation step.
+  Scene and target estimates must eventually come from simulated RGBD through
+  the shared camera/perception boundary, not simulator object metadata or oracle
+  masks; simulator-only truth remains separate for plant construction/evaluation.
+  Perception/grasp methods and remaining experimental details are not yet chosen.
+  D23 adds a geometry requirement: replace fixed count menus/axial box chains in
+  the new method with observation-driven, adaptive sphere covers bounded by
+  sphere-count and computation budgets. PROGRESS.md records primary research
+  and a proposed adaptive enclosing-sphere method; exact algorithm, numeric caps
+  and latency are not yet approved/measured. Keep single-sphere baselines and
+  historical results. No implementation or new run is authorized by this planning.
+  D24 adds four primary metrics (unwanted collision, pickup success, CBF count,
+  run cost) and a first revised demo targeting easy/medium/hard static scenes
+  qualified by real off-mode collisions, not Jev wins. See PROGRESS.md's handoff
+  subsection; D25 separately authorizes publishing these planning documents.
 - Publication authorization (21 October; D21): Nihar requested pushing the
   completed D20 camera plumbing to the existing Jev repository. Commit/push
   source, tests, the unverified example configuration and documentation only.
