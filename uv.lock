@@ -212,7 +212,7 @@ wheels = [
 [[package]]
 name = "jev-cbf-planning"
 version = "0.0.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "elastiqp", extra = ["jax"] },
     { name = "jax" },

@@ -1,0 +1,18 @@
+{
+  "README.md": {
+    "archived_at": "docs/history/readme-2026-10-22.md",
+    "sha256": "9a77f266082b014c55db78a6cc738f64aa37e9636ce4cd4df97baba7f874d74c"
+  },
+  "AGENTS.md": {
+    "archived_at": "docs/history/agents-2026-10-22.md",
+    "sha256": "6550b0573e5f216082ebee45e65b89bd82c987a9f1d19c9176fea62d9252e38f"
+  },
+  "PROGRESS.md": {
+    "archived_at": "docs/history/progress-2026-10-22.md",
+    "sha256": "527aa155140a3b0bd6de7b74aa86fcf765f620c14e3116050c1fe10146c4ae54"
+  },
+  "ARCHITECTURE.md": {
+    "archived_at": "docs/history/architecture-2026-10-22.md",
+    "sha256": "b9d56f0375052f6df838c2ad4a9a3242aeafa699dc34396be924da99f8e232a1"
+  }
+}

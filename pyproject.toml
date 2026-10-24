@@ -20,5 +20,13 @@ dependencies = [
 [project.optional-dependencies]
 jev = ["typesafe-sdk>=0.7.5"]
 
-[tool.uv]
-package = false
+[project.scripts]
+jev-cbf = "jev_cbf.cli:main"
+
+[build-system]
+requires = ["uv_build>=0.13.4,<0.14"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "jev_cbf"
+source-include = ["configs/**", "docs/**", "tests/**", "AGENTS.md", "ARCHITECTURE.md", "PROGRESS.md", "uv.lock"]
